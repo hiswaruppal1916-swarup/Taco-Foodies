@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TACO Foodies – Award-Winning Mexican & Chinese Restaurant</title>
+  <meta name="description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum. 5.0 Rated, Open 24 Hours.">
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       1. FLIPKART STYLE HEADER & NAVIGATION
+       ========================================== -->
+  <header class="flipkart-header">
+    <div class="container">
+      <div class="header-top-bar">
+        <!-- Logo -->
+        <a href="index.html" class="brand-logo">
+          <span class="logo-icon">🌮</span>
+          <div class="logo-text">
+            <span class="main-name">TACO FOODIES</span>
+            <span class="tagline">Mexican & Chinese Fusion</span>
+          </div>
+        </a>
+
+        <!-- Global Search Bar (Flipkart Style) -->
+        <div class="header-search-wrapper">
+          <span class="header-search-icon">🔍</span>
+          <input type="text" id="headerSearchInput" class="header-search-input" placeholder="Search Tacos, Sizzlers, Dim Sum, Hakka Noodles...">
+        </div>
+
+        <!-- Header Action Controls -->
+        <div class="header-actions">
+          <!-- Table QR Indicator Badge -->
+          <button id="headerTableBadge" class="table-badge-btn" onclick="tableQRSystem.openTablePicker()">
+            📍 Select Table
+          </button>
+
+          <!-- Cart Button -->
+          <button class="header-cart-btn open-cart-btn">
+            <span>🛒</span>
+            <span>Cart</span>
+            <span id="cartCountBadge" class="cart-count-badge">0</span>
+          </button>
+
+          <!-- Owner Google Sheet Sync Modal Button -->
+          <button id="openOwnerSyncModalBtn" class="owner-sync-icon-btn" title="Owner Google Sheet Settings">
+            ⚙️
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       2. QR TABLE WELCOME BANNER (Dynamic)
+       ========================================== -->
+  <div class="container">
+    <div id="qrTableBanner" class="qr-welcome-wrapper" style="display: none;"></div>
+  </div>
+
+  <main class="container">
+
+    <!-- ==========================================
+         3. HERO PROMOTIONAL BANNER SLIDER
+         ========================================== -->
+    <section class="hero-slider-container">
+      <div id="heroSliderTrack" class="hero-slider-track">
+        <!-- Slides dynamically rendered by UIController.js -->
+      </div>
+      
+      <!-- Slider Arrows -->
+      <button id="prevHeroSlideBtn" class="slider-nav-btn prev" aria-label="Previous Slide">❮</button>
+      <button id="nextHeroSlideBtn" class="slider-nav-btn next" aria-label="Next Slide">❯</button>
+
+      <!-- Slider Dots -->
+      <div id="heroSliderDots" class="slider-dots-wrapper"></div>
+    </section>
+
+    <!-- ==========================================
+         4. CATEGORY NAVIGATION PILLS
+         ========================================== -->
+    <nav id="categoryPillsNav" class="category-pills-bar">
+      <!-- Category pills dynamically rendered by UIController.js -->
+    </nav>
+
+    <!-- ==========================================
+         5. TODAY'S DEALS COUNTDOWN BANNER
+         ========================================== -->
+    <section class="deals-countdown-banner">
+      <div class="deal-text-box">
+        <span class="badge-fk-yellow">⚡ FLIPKART STEAL DEALS</span>
+        <h3>Today's Special Food Offers (Up to 30% OFF)</h3>
+        <p>Grab discounted Mexican Tacos & Indo-Chinese Combos before the timer ends!</p>
+      </div>
+
+      <div class="timer-box">
+        <div class="timer-unit">
+          <span id="timerHours" class="timer-num">04</span>
+          <span class="timer-label">HOURS</span>
+        </div>
+        <span class="timer-colon">:</span>
+        <div class="timer-unit">
+          <span id="timerMins" class="timer-num">35</span>
+          <span class="timer-label">MINS</span>
+        </div>
+        <span class="timer-colon">:</span>
+        <div class="timer-unit">
+          <span id="timerSecs" class="timer-num">20</span>
+          <span class="timer-label">SECS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         6. HORIZONTAL FOOD CAROUSELS (FLIPKART STYLE)
+         ========================================== -->
+    <!-- 🔥 Trending Now -->
+    <section class="collection-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🔥 Trending Now</h2>
+          <span class="badge-fk-yellow">Bestsellers</span>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselTrending', 'left')">❮</button>
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselTrending', 'right')">❯</button>
+        </div>
+      </div>
+      <div id="carouselTrending" class="horizontal-carousel-track"></div>
+    </section>
+
+    <!-- 🌮 Mexican Favorites -->
+    <section class="collection-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🌮 Mexican Favorites</h2>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselMexican', 'left')">❮</button>
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselMexican', 'right')">❯</button>
+        </div>
+      </div>
+      <div id="carouselMexican" class="horizontal-carousel-track"></div>
+    </section>
+
+    <!-- 🍜 Chinese Specials -->
+    <section class="collection-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🍜 Chinese Specials</h2>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselChinese', 'left')">❮</button>
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselChinese', 'right')">❯</button>
+        </div>
+      </div>
+      <div id="carouselChinese" class="horizontal-carousel-track"></div>
+    </section>
+
+    <!-- 🎁 Today's Deals -->
+    <section class="collection-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🎁 Today's Discount Deals</h2>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselDeals', 'left')">❮</button>
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselDeals', 'right')">❯</button>
+        </div>
+      </div>
+      <div id="carouselDeals" class="horizontal-carousel-track"></div>
+    </section>
+
+    <!-- 🥤 Beverages -->
+    <section class="collection-section">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">🥤 Coolers & Drinks</h2>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselBeverages', 'left')">❮</button>
+          <button class="carousel-nav-btn" onclick="uiController.scrollCarousel('carouselBeverages', 'right')">❯</button>
+        </div>
+      </div>
+      <div id="carouselBeverages" class="horizontal-carousel-track"></div>
+    </section>
+
+    <!-- ==========================================
+         7. MAIN DIGITAL MENU MATRIX & SEARCH FILTERS
+         ========================================== -->
+    <section id="digitalMenuSection" class="collection-section" style="margin-top: 40px;">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📖 Full Digital Menu</h2>
+          <span id="searchResultCount" style="font-size: 0.85rem; color: var(--text-secondary);"></span>
+        </div>
+      </div>
+
+      <!-- Menu Search & Diet Filter Controls -->
+      <div class="menu-controls-row">
+        <div style="flex: 1; max-width: 320px;">
+          <input type="text" id="menuSearchInput" class="header-search-input" placeholder="Search menu items..." style="padding-left: 14px;">
+        </div>
+
+        <div class="diet-filters-group">
+          <button class="diet-filter-btn active" data-diet="all">All Dishes</button>
+          <button class="diet-filter-btn" data-diet="veg">🟢 Veg Only</button>
+          <button class="diet-filter-btn" data-diet="non-veg">🔴 Non-Veg Only</button>
+        </div>
+      </div>
+
+      <!-- Main Food Grid -->
+      <div id="mainMenuGrid" class="main-menu-grid"></div>
+    </section>
+
+    <!-- ==========================================
+         8. RESTAURANT PHOTO GALLERY
+         ========================================== -->
+    <section class="collection-section" style="margin-top: 60px;">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📸 Restaurant Photo Gallery</h2>
+          <span class="badge-fk-yellow">Interior & Food</span>
+        </div>
+      </div>
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+
+    <!-- ==========================================
+         9. CUSTOMER REVIEWS & RATINGS SUMMARY
+         ========================================== -->
+    <section class="collection-section" style="margin-top: 60px;">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">⭐ Customer Reviews & Ratings</h2>
+        </div>
+      </div>
+
+      <div class="reviews-summary-banner">
+        <div class="rating-score-box">
+          <span class="big-rating-num">5.0</span>
+          <div class="rating-stars-col">
+            <span style="color: #fbc02d; font-size: 1.3rem;">★★★★★</span>
+            <span style="color: var(--text-secondary); font-size: 0.85rem;">Based on 43 Google Reviews</span>
+          </div>
+        </div>
+        <div>
+          <span class="badge-fk-yellow">100% VERIFIED DINER RATING</span>
+        </div>
+      </div>
+
+      <div id="customerReviewsTrack" class="reviews-carousel-track"></div>
+    </section>
+
+    <!-- ==========================================
+         10. CONTACT & GOOGLE MAPS SECTION
+         ========================================== -->
+    <section class="collection-section" style="margin-top: 60px;">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">📍 Location & Contact Us</h2>
+        </div>
+      </div>
+
+      <div class="contact-section-grid">
+        <div class="contact-info-card">
+          <h3 style="font-size: 1.4rem; margin-bottom: 16px; color: var(--fk-yellow);">TACO Foodies Restaurant</h3>
+          
+          <div class="info-item">
+            <span class="info-icon">📍</span>
+            <div class="info-details">
+              <h4>Address</h4>
+              <p>Bhupati Nagar, Madha Khali, West Bengal 721425 (Plus Code: XPWR+78)</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <span class="info-icon">🕒</span>
+            <div class="info-details">
+              <h4>Business Hours</h4>
+              <p>Open 24 Hours (Dine-in, Drive-through & No-contact Delivery)</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <span class="info-icon">📞</span>
+            <div class="info-details">
+              <h4>Phone Number</h4>
+              <p><a href="tel:08400310013" style="color: var(--taco-teal); font-weight: 700;">084003 10013</a></p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <a href="tel:08400310013" class="primary-btn" style="flex: 1;">📞 Call Now</a>
+            <a href="https://wa.me/918400310013" target="_blank" class="secondary-btn" style="flex: 1; background: #25d366; color: #fff; border: none;">💬 WhatsApp</a>
+          </div>
+        </div>
+
+        <!-- Embedded Google Maps -->
+        <div class="map-container-box">
+          <iframe 
+            title="TACO Foodies Google Maps" 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3698.81432128741!2d87.7408681!3d21.9956379!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a02db003d2d7f99%3A0x33a7243d12408a46!2sTACO%20foodies!5e0!3m2!1sen!2sin!4v1724000000000!5m2!1sen!2sin" 
+            width="100%" 
+            height="100%" 
+            style="border:0; min-height: 320px;" 
+            allowfullscreen="" 
+            loading="lazy">
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       11. SLIDE-OVER CART DRAWER
+       ========================================== -->
+  <div id="cartDrawerOverlay" class="cart-drawer-overlay"></div>
+  <aside id="cartDrawer" class="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3 style="font-size: 1.2rem;">🛒 Your Food Order</h3>
+      <button id="closeCartDrawerBtn" class="close-modal-btn">✕</button>
+    </div>
+
+    <div id="cartDrawerItems" class="cart-drawer-items">
+      <!-- Item cards inserted dynamically by cart.js -->
+    </div>
+
+    <div class="cart-drawer-footer">
+      <div class="price-summary-row">
+        <span>Item Total (Original)</span>
+        <span id="cartSubtotalAmount">₹0</span>
+      </div>
+      <div class="price-summary-row" style="color: var(--taco-green);">
+        <span>Offer Savings</span>
+        <span id="cartSavingsAmount">-₹0</span>
+      </div>
+      <div class="price-summary-row total-row">
+        <span>Total Payable</span>
+        <span id="cartTotalAmount">₹0</span>
+      </div>
+
+      <button id="checkoutWhatsAppBtn" class="whatsapp-checkout-btn">
+        💬 Confirm & Order via WhatsApp
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==========================================
+       12. FLOATING ACTION BAR FOR MOBILE
+       ========================================== -->
+  <div class="floating-mobile-bar">
+    <button class="floating-action-item" onclick="window.location.href='#digitalMenuSection'">
+      <span class="icon">📖</span>
+      <span>Menu</span>
+    </button>
+
+    <button class="floating-action-item" onclick="tableQRSystem.openTablePicker()">
+      <span class="icon">📍</span>
+      <span>Table</span>
+    </button>
+
+    <button class="floating-action-item active open-cart-btn">
+      <span class="icon">🛒</span>
+      <span id="floatingCartTotal">₹0</span>
+    </button>
+
+    <a href="tel:08400310013" class="floating-action-item">
+      <span class="icon">📞</span>
+      <span>Call</span>
+    </a>
+
+    <a href="https://wa.me/918400310013" target="_blank" class="floating-action-item" style="color: #25d366;">
+      <span class="icon">💬</span>
+      <span>Chat</span>
+    </a>
+  </div>
+
+  <!-- ==========================================
+       13. OWNER GOOGLE SHEET SYNC MODAL
+       ========================================== -->
+  <div id="ownerSyncModal" class="modal-backdrop">
+    <div class="modal-box">
+      <button id="closeSyncModalBtn" class="close-modal-btn">✕</button>
+      <h3 style="font-size: 1.3rem; margin-bottom: 10px; color: var(--fk-yellow);">⚙️ Restaurant Owner - Google Sheet Sync</h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+        Connect your published Google Sheet CSV URL below to update food names, prices, discounts, and images in real time without writing code!
+      </p>
+
+      <div id="sheetSyncStatus" style="margin-bottom: 14px;"></div>
+
+      <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Published Google Sheet CSV URL:</label>
+      <input type="text" id="googleSheetUrlInput" class="header-search-input" style="padding-left: 12px; margin-bottom: 16px;" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv">
+
+      <div style="display: flex; gap: 10px;">
+        <button id="saveSheetUrlBtn" class="primary-btn" style="flex: 1;">Save & Sync Menu</button>
+        <button id="resetSheetUrlBtn" class="secondary-btn">Reset Default</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       14. DISH DETAIL LIGHTBOX MODAL
+       ========================================== -->
+  <div id="dishDetailModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 600px;">
+      <button id="closeDishModalBtn" class="close-modal-btn">✕</button>
+      <div id="dishDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       15. GALLERY LIGHTBOX MODAL
+       ========================================== -->
+  <div id="galleryModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 750px; padding: 16px;">
+      <button id="closeGalleryModalBtn" class="close-modal-btn">✕</button>
+      <img id="galleryModalImg" src="" alt="Gallery Preview" style="width: 100%; height: 380px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: 12px;">
+      <h3 id="galleryModalTitle" style="font-size: 1.2rem; color: var(--fk-yellow);"></h3>
+      <p id="galleryModalCaption" style="font-size: 0.88rem; color: var(--text-secondary);"></p>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       16. TABLE SELECTION MODAL
+       ========================================== -->
+  <div id="tablePickerModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 440px;">
+      <button id="closeTableModalBtn" class="close-modal-btn">✕</button>
+      <h3 style="font-size: 1.3rem; margin-bottom: 8px; color: var(--taco-teal);">📍 Select Your Dining Table</h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+        Choose your table number below to order food directly to your seat at TACO Foodies!
+      </p>
+
+      <div class="table-grid-selector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px;">
+        <!-- Generated dynamically or clickable numbers -->
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(1)">T-1</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(2)">T-2</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(3)">T-3</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(4)">T-4</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(5)">T-5</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(6)">T-6</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(7)">T-7</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(8)">T-8</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(9)">T-9</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(10)">T-10</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(11)">T-11</button>
+        <button class="table-num-btn" onclick="tableQRSystem.setTable(12)">T-12</button>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="number" id="customTableInput" class="header-search-input" style="padding-left: 14px;" placeholder="Custom Table No. (e.g. 15)">
+        <button id="saveCustomTableBtn" class="primary-btn" style="white-space: nowrap;">Set Table</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/menuData.js"></script>
+  <script src="js/tableQR.js"></script>
+  <script src="js/googleSheetsSync.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/UIController.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
