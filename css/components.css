@@ -2529,6 +2529,219 @@
     width: 100%;
     gap: 5px;
   }
+}
+
+/* ==========================================================================
+   MULTI-ORDER TRACKING SYSTEM STYLES ("My Orders" / #my-orders)
+   ========================================================================== */
+.my-orders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.my-orders-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.section-title-label {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--fk-yellow);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orders-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-tracker-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+}
+
+.order-tracker-card.active-card {
+  border-left: 5px solid var(--fk-yellow);
+  background: linear-gradient(135deg, rgba(255, 229, 0, 0.04) 0%, var(--bg-card) 100%);
+}
+
+.order-tracker-card.history-card {
+  border-left: 5px solid rgba(255, 255, 255, 0.2);
+  opacity: 0.88;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.card-id-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-order-num {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: #ffffff;
+}
+
+.card-order-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.order-type-chip {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+.order-type-chip.dine-in {
+  background: rgba(0, 180, 216, 0.15);
+  border: 1px solid var(--taco-teal);
+  color: var(--taco-teal);
+}
+
+.order-type-chip.delivery {
+  background: rgba(255, 87, 34, 0.15);
+  border: 1px solid var(--taco-orange);
+  color: var(--taco-orange);
+}
+
+.card-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+}
+
+.card-status-banner .banner-icon {
+  font-size: 1.5rem;
+}
+
+.card-status-banner .banner-label {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--fk-yellow);
+}
+
+.card-status-banner .banner-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Card Summary Box */
+.card-summary-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-details-row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  border-bottom: 1px dashed var(--border-glass);
+  padding-bottom: 8px;
+}
+
+.card-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tracker-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+}
+
+.item-name-qty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.item-qty-tag {
+  background: rgba(255, 87, 34, 0.2);
+  color: var(--taco-orange);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+
+.item-name-str {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #ffffff;
+}
+
+.item-price-str {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--fk-yellow);
+  white-space: nowrap;
+}
+
+.card-totals-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-glass);
+  padding-top: 8px;
+}
+
+.card-grand-total {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--fk-yellow);
+}
 
   .card-action-group .add-to-cart-btn,
   .card-action-group .buy-now-btn {

@@ -285,10 +285,10 @@ class CheckoutSystem {
         <h3 class="order-conf-title">Order Submitted Successfully!</h3>
         <span class="order-conf-id-badge">Order ID: #${order.id}</span>
         <p class="order-conf-message">
-          Please wait while the restaurant reviews your order. You can track your order status in real time.
+          Please wait while the restaurant reviews your order. You can track all active orders in real time.
         </p>
-        <button class="primary-btn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem; margin-top: 10px;" onclick="checkoutSystem.closeCheckoutModal(); orderTracker.openTrackerModal('${order.id}');">
-          🛵 Track Order Status
+        <button class="primary-btn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem; margin-top: 10px;" onclick="checkoutSystem.closeCheckoutModal(); orderTracker.openMyOrdersModal();">
+          📦 Track My Orders
         </button>
       </div>
     `;
