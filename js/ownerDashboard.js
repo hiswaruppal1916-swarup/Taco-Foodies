@@ -1,12 +1,6 @@
 /**
  * TACO Foodies - Restaurant Owner Dashboard & Auth Engine
- * Single Source of Truth: Centralized Supabase Database & Realtime Sync.
- * Features:
- * 1. Protected Routes (/owner-login & /owner-dashboard)
- * 2. Summary KPI Cards (Today's Orders, Revenue, Pending, Prep, Ready, Complete, Cancelled, Delivery, Dine-In)
- * 3. Realtime Order Feed from all customer devices
- * 4. One-Click Status Controls (UPDATE orders WHERE order_id = selected_order_id)
- * 5. Sales Analytics
+ * Multi-Device Realtime Sync across all owner devices and customer devices.
  */
 class OwnerDashboardManager {
   constructor() {
@@ -21,11 +15,33 @@ class OwnerDashboardManager {
 
     window.addEventListener('hashchange', () => this.checkHashRoute());
 
-    // Supabase Realtime synchronization for Owner Dashboard across all devices
+    // Listen for real-time order events on all owner devices
     if (typeof supabaseService !== 'undefined') {
-      supabaseService.subscribeToRealtimeOrders((payload) => {
-        if (this.isDashboardVisible()) {
-          this.refreshDashboardData();
+      supabaseService.addRealtimeListener((payload) => {
+        if (!payload) return;
+
+        if (this.isDashboardVisible() || supabaseService.isOwnerLoggedIn()) {
+          console.log('⚡ Realtime Event on Owner Dashboard:', payload.eventType);
+
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            const updatedItem = payload.new;
+            const updatedNum = updatedItem.order_number || updatedItem.id;
+            const dbId = updatedItem.id;
+
+            const existingOrder = (this.cachedOrders || []).find(o => o.id === updatedNum || o.order_number === updatedNum || o.db_id === dbId);
+
+            if (existingOrder) {
+              existingOrder.status = updatedItem.status;
+              this.renderSummaryCards();
+              this.renderOrdersFeed();
+              this.renderAnalytics();
+            } else {
+              this.refreshDashboardData();
+            }
+          } else {
+            // New order placed (INSERT) or deleted (DELETE)
+            this.refreshDashboardData();
+          }
         }
       });
     }
@@ -127,7 +143,6 @@ class OwnerDashboardManager {
   }
 
   async refreshDashboardData() {
-    // 100% Centralized Supabase Database fetching across ALL customer devices
     if (typeof supabaseService !== 'undefined') {
       const dbOrders = await supabaseService.fetchOwnerOrders('all', 'all');
       this.cachedOrders = dbOrders || [];

@@ -1,11 +1,7 @@
 /**
  * TACO Foodies - Multi-Order Tracking System ("My Orders" / #my-orders)
- * Single Source of Truth: Centralized Supabase Database & Realtime Sync.
- * Supports:
- * 1. Multi-Order Dine-In Tracking (by Table Number & Supabase DB)
- * 2. Multi-Order Home Delivery Tracking (by Supabase Order ID)
- * 3. Independent 5-stage stepper timeline for every order
- * 4. Active Orders vs. Completed Orders (Order History)
+ * Real-Time Supabase Synchronization:
+ * Automatically refreshes customer tracking status in real time when owner updates order in database.
  */
 class OrderTracker {
   constructor() {
@@ -85,25 +81,29 @@ class OrderTracker {
     this.checkHashRoute();
     window.addEventListener('hashchange', () => this.checkHashRoute());
 
-    // Listen for Supabase Realtime order status updates for this customer
+    // Listen for Supabase Realtime order status updates for this customer only
     if (typeof supabaseService !== 'undefined') {
-      supabaseService.subscribeToRealtimeOrders((payload) => {
-        if (payload && payload.eventType === 'UPDATE' && payload.new) {
-          const updatedNum = payload.new.order_number || payload.new.id;
-          const myOrderNumbers = this.getOrderIdsList();
+      supabaseService.addRealtimeListener((payload) => {
+        if (!payload || !payload.new) return;
 
-          if (myOrderNumbers.includes(updatedNum) || myOrderNumbers.includes(payload.new.id)) {
-            const newStatus = payload.new.status;
-            const info = this.statusMap[newStatus] || { label: newStatus, icon: '🔔' };
+        const updatedItem = payload.new;
+        const updatedNum = updatedItem.order_number || updatedItem.id;
+        const dbId = updatedItem.id;
 
-            if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
-              cartSystem.showToastNotification(`Order #${updatedNum}: ${info.label}`);
-            }
+        const myOrderNumbers = this.getOrderIdsList();
+        const isMyOrder = myOrderNumbers.some(num => num === updatedNum || num === dbId);
 
-            const modal = document.getElementById('orderTrackerModal');
-            if (modal && modal.classList.contains('active')) {
-              this.renderMyOrdersPage();
-            }
+        if (isMyOrder) {
+          const newStatus = updatedItem.status;
+          const info = this.statusMap[newStatus] || { label: newStatus, icon: '🔔' };
+
+          if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+            cartSystem.showToastNotification(`Order #${updatedNum}: ${info.label}`);
+          }
+
+          const modal = document.getElementById('orderTrackerModal');
+          if (modal && modal.classList.contains('active')) {
+            this.renderMyOrdersPage();
           }
         }
       });
@@ -193,13 +193,6 @@ class OrderTracker {
     const container = document.getElementById('orderTrackerContent');
     if (!container) return;
 
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px 20px;">
-        <span style="font-size: 2rem;">⚡</span>
-        <p style="color: var(--text-secondary); margin-top: 10px;">Loading active orders from Supabase database...</p>
-      </div>
-    `;
-
     const allCustomerOrders = await this.getCustomerOrdersList();
 
     if (allCustomerOrders.length === 0) {
@@ -256,7 +249,6 @@ class OrderTracker {
           </span>
         </div>
 
-        <!-- 1. ACTIVE ORDERS SECTION -->
         <div class="orders-section">
           <h3 class="section-title-label">🔥 Active Orders (${activeOrders.length})</h3>
           <div class="orders-cards-stack">
@@ -264,7 +256,6 @@ class OrderTracker {
           </div>
         </div>
 
-        <!-- 2. COMPLETED ORDERS HISTORY SECTION -->
         ${completedOrders.length > 0 ? `
           <div class="orders-section" style="margin-top: 32px;">
             <h3 class="section-title-label" style="color: var(--text-secondary);">📜 Order History (${completedOrders.length})</h3>

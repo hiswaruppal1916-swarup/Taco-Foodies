@@ -1,6 +1,6 @@
 /**
  * TACO Foodies - Supabase Centralized Database & Realtime Client
- * Pure Supabase order management engine. All order data resides in Supabase.
+ * Single Source of Truth: Centralized Supabase Database & Realtime Sync across all customer and owner devices.
  */
 class SupabaseClientService {
   constructor() {
@@ -8,6 +8,8 @@ class SupabaseClientService {
     this.supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xYm5ndGd3ZWp6YW1taGR3Y3psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMTkyMDUsImV4cCI6MjEwMjY5NTIwNX0.BA1xfJGa1ZZ9mxFTZyAJj7dJEACJUxZQyxvA5v92_EM';
     this.authorizedOwnerEmail = 'restaurantowner@gmail.com';
     this.client = null;
+    this.ordersChannel = null;
+    this.realtimeListeners = new Set();
     this.init();
   }
 
@@ -16,12 +18,56 @@ class SupabaseClientService {
       try {
         this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
         console.log('⚡ Supabase Client Connected:', this.supabaseUrl);
+        this.initOrdersRealtimeChannel();
       } catch (e) {
         console.warn('Supabase initialization warning:', e);
       }
     } else {
       console.warn('Supabase JS SDK not loaded yet.');
     }
+  }
+
+  // --- 0. SINGLETON REALTIME WEBSOCKET SUBSCRIPTION CHANNEL ---
+  initOrdersRealtimeChannel() {
+    if (!this.client || this.ordersChannel) return;
+
+    try {
+      const channelId = 'orders-realtime-global-' + Math.floor(Math.random() * 1000000);
+      this.ordersChannel = this.client
+        .channel(channelId)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders' },
+          (payload) => {
+            console.log('⚡ Supabase Realtime Order Event:', payload.eventType, payload.new || payload.old);
+            this.notifyRealtimeListeners(payload);
+          }
+        )
+        .subscribe((status, err) => {
+          console.log(`⚡ Realtime Orders Channel Status [${status}]`, err || '');
+        });
+    } catch (e) {
+      console.warn('Realtime channel init exception:', e);
+    }
+  }
+
+  addRealtimeListener(callback) {
+    if (typeof callback === 'function') {
+      this.realtimeListeners.add(callback);
+    }
+    return () => {
+      this.realtimeListeners.delete(callback);
+    };
+  }
+
+  notifyRealtimeListeners(payload) {
+    this.realtimeListeners.forEach(listener => {
+      try {
+        listener(payload);
+      } catch (e) {
+        console.warn('Error in realtime listener callback:', e);
+      }
+    });
   }
 
   formatDbOrder(dbo) {
@@ -78,7 +124,6 @@ class SupabaseClientService {
     }
 
     try {
-      // 1. Optional Customer Record Creation
       let customerId = null;
       if (orderPayload.customerName || orderPayload.phone) {
         const { data: custData } = await this.client
@@ -96,7 +141,6 @@ class SupabaseClientService {
 
       orderData.customer_id = customerId;
 
-      // 2. Insert Main Order into Supabase DB 'orders' table
       const { data: dbOrder, error: orderErr } = await this.client
         .from('orders')
         .insert([orderData])
@@ -108,7 +152,6 @@ class SupabaseClientService {
         return null;
       }
 
-      // 3. Insert Order Items into 'order_items' table
       if (dbOrder && orderPayload.items && orderPayload.items.length > 0) {
         const itemsToInsert = orderPayload.items.map(item => ({
           order_id: dbOrder.id,
@@ -120,7 +163,6 @@ class SupabaseClientService {
         await this.client.from('order_items').insert(itemsToInsert);
       }
 
-      // 4. Fetch full record with embedded order_items
       const { data: fullOrder } = await this.client
         .from('orders')
         .select('*, order_items(*)')
@@ -229,7 +271,6 @@ class SupabaseClientService {
     if (!this.client || !orderId) return false;
 
     try {
-      // Updates ONLY the specific order matching order_number or id
       const { error } = await this.client
         .from('orders')
         .update({ 
@@ -251,43 +292,23 @@ class SupabaseClientService {
     }
   }
 
-  // --- 5. SUPABASE REALTIME MULTI-DEVICE SYNCHRONIZATION ---
-  subscribeToRealtimeOrders(onRealtimeEvent) {
-    if (!this.client) return null;
-
-    try {
-      const channel = this.client
-        .channel('public_orders_realtime_channel')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'orders' },
-          (payload) => {
-            if (onRealtimeEvent) {
-              onRealtimeEvent(payload);
-            }
-          }
-        )
-        .subscribe();
-
-      return channel;
-    } catch (e) {
-      console.warn('Supabase Realtime subscription error:', e);
-      return null;
-    }
+  // Backward-compatibility wrappers
+  subscribeToRealtimeOrders(callback) {
+    return this.addRealtimeListener(callback);
   }
 
-  // Fallback alias for backward compatibility
   subscribeToOrderUpdates(orderNumber, onStatusUpdate) {
-    return this.subscribeToRealtimeOrders((payload) => {
+    return this.addRealtimeListener((payload) => {
       if (payload && payload.eventType === 'UPDATE' && payload.new) {
-        if (payload.new.order_number === orderNumber || payload.new.id === orderNumber) {
+        const num = payload.new.order_number || payload.new.id;
+        if (num === orderNumber || payload.new.id === orderNumber) {
           if (onStatusUpdate) onStatusUpdate(payload.new);
         }
       }
     });
   }
 
-  // --- 6. OWNER AUTHENTICATION & ACCESS CONTROL ---
+  // --- 5. OWNER AUTHENTICATION & ACCESS CONTROL ---
   async ownerLogin(email, password) {
     const cleanEmail = (email || '').trim().toLowerCase();
     
@@ -318,7 +339,6 @@ class SupabaseClientService {
       }
     }
 
-    // Authorized owner session for valid owner email
     localStorage.setItem('taco_owner_session', JSON.stringify({
       email: cleanEmail,
       authenticatedAt: new Date().toISOString()
