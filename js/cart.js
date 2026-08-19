@@ -144,7 +144,7 @@ class CartSystem {
           <span class="empty-icon">🌮</span>
           <h3>Your Food Cart is Empty</h3>
           <p>Explore our delicious Mexican & Chinese dishes and add your favorites!</p>
-          <button class="primary-btn" onclick="cartSystem.closeCartDrawer()">Browse Flipkart Menu</button>
+          <button class="primary-btn" onclick="cartSystem.closeCartDrawer()">Browse TACO Foodies Menu</button>
         </div>
       `;
       if (cartTotalEl) cartTotalEl.textContent = '₹0';
