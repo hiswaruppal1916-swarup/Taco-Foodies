@@ -8,12 +8,48 @@ class OrderTracker {
     this.storageKey = 'taco_foodies_orders_v1';
     this.activeOrderId = localStorage.getItem('taco_foodies_current_order_id') || null;
     this.statusMap = {
-      'received': { label: 'Order Received', icon: '🟡', desc: 'Waiting for restaurant confirmation...', step: 1 },
-      'preparing': { label: 'Preparing Your Order', icon: '👨‍🍳', desc: 'Chefs are crafting your food fresh in the kitchen!', step: 2 },
-      'confirmed': { label: 'Order Confirmed', icon: '✅', desc: 'Restaurant confirmed your order & prep is on schedule.', step: 3 },
-      'transit_ready': { label: 'Out for Delivery / Ready to Serve', icon: '🚚', desc: 'Food is sizzling hot & on its way to your table/doorstep!', step: 4 },
-      'completed': { label: 'Order Completed', icon: '🎉', desc: 'Thank you for dining with TACO Foodies!', step: 5 },
-      'unavailable': { label: 'Item Unavailable', icon: '❌', desc: 'Sorry, one or more items are out of stock.', step: 0 }
+      'received': { 
+        label: 'Waiting for restaurant confirmation', 
+        icon: '⏳', 
+        toast: '⏳ Order submitted! Waiting for restaurant confirmation...', 
+        desc: 'Please wait while the restaurant reviews your order.', 
+        step: 1 
+      },
+      'preparing': { 
+        label: 'Preparing your order', 
+        icon: '👨‍🍳', 
+        toast: '👨‍🍳 Your food is being prepared.', 
+        desc: 'Chefs are crafting your food fresh in the kitchen!', 
+        step: 2 
+      },
+      'confirmed': { 
+        label: 'Order confirmed', 
+        icon: '✅', 
+        toast: '✅ Your order has been accepted.', 
+        desc: 'Restaurant confirmed your order & prep is on schedule.', 
+        step: 3 
+      },
+      'transit_ready': { 
+        label: 'Out for delivery / Ready to serve', 
+        icon: '🚚', 
+        toast: '🚚 Your order is on the way / 🍽️ Ready to serve.', 
+        desc: 'Food is sizzling hot & ready for you!', 
+        step: 4 
+      },
+      'completed': { 
+        label: 'Order completed', 
+        icon: '🎉', 
+        toast: '🎉 Your order has been completed!', 
+        desc: 'Thank you for dining with TACO Foodies!', 
+        step: 5 
+      },
+      'unavailable': { 
+        label: 'Item unavailable', 
+        icon: '❌', 
+        toast: '❌ This item is currently unavailable.', 
+        desc: 'Sorry, the restaurant could not fulfill this item at the moment.', 
+        step: 0 
+      }
     };
   }
 
@@ -47,6 +83,11 @@ class OrderTracker {
     localStorage.setItem(this.storageKey, JSON.stringify(orders));
     localStorage.setItem('taco_foodies_current_order_id', id);
     this.activeOrderId = id;
+
+    // Show instant toast notification
+    if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+      cartSystem.showToastNotification(`🎉 Order #${id} submitted successfully!`);
+    }
 
     return newOrder;
   }
@@ -88,36 +129,51 @@ class OrderTracker {
         const order = this.getOrder(this.activeOrderId);
         if (order) {
           this.renderTrackerContent(order);
-          const info = this.statusMap[order.status] || { label: order.status, icon: '🔔' };
-          cartSystem.showToastNotification(`${info.icon} Status Update: ${info.label}`);
+          const info = this.statusMap[order.status] || { toast: `Status: ${order.status}`, icon: '🔔' };
+          if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+            cartSystem.showToastNotification(info.toast);
+          }
         }
       }
     });
 
     window.addEventListener('orderStatusChanged', (e) => {
       const order = e.detail;
-      const info = this.statusMap[order.status] || { label: order.status, icon: '🔔' };
-      cartSystem.showToastNotification(`${info.icon} Status Update: ${info.label}`);
+      const info = this.statusMap[order.status] || { toast: `Status: ${order.status}`, icon: '🔔' };
+      if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+        cartSystem.showToastNotification(info.toast);
+      }
     });
   }
 
   openTrackerModal(orderId = null) {
     const targetId = orderId || this.activeOrderId || localStorage.getItem('taco_foodies_current_order_id');
-    if (!targetId) {
-      alert('No active order found. Place a new order first!');
+    const modal = document.getElementById('orderTrackerModal');
+    if (!modal) return;
+
+    const container = document.getElementById('orderTrackerContent');
+    if (!targetId || !this.getOrder(targetId)) {
+      // Hidden tracking timeline state if no submitted order exists
+      if (container) {
+        container.innerHTML = `
+          <div class="empty-cart-state" style="padding: 40px 20px;">
+            <span class="empty-icon">🛵</span>
+            <h3 style="font-size: 1.3rem; margin-bottom: 8px;">No Active Order to Track</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">
+              Your order tracker will become active automatically once you confirm and submit an order.
+            </p>
+            <button class="primary-btn" onclick="orderTracker.closeTrackerModal(); window.location.href='#digitalMenuSection';">
+              Browse Menu & Order
+            </button>
+          </div>
+        `;
+      }
+      modal.classList.add('active');
       return;
     }
 
     const order = this.getOrder(targetId);
-    if (!order) {
-      alert('Order details not found.');
-      return;
-    }
-
     this.activeOrderId = targetId;
-    const modal = document.getElementById('orderTrackerModal');
-    if (!modal) return;
-
     this.renderTrackerContent(order);
     modal.classList.add('active');
   }
@@ -150,6 +206,9 @@ class OrderTracker {
     const isStep4Active = currentStatusInfo.step >= 4 ? 'active' : '';
     const isStep5Active = currentStatusInfo.step >= 5 ? 'active' : '';
 
+    const step4Label = isDelivery ? '🚚 Out for delivery' : '🍽️ Ready to serve';
+    const statusDisplayLabel = (order.status === 'transit_ready') ? (isDelivery ? '🚚 Out for delivery' : '🍽️ Ready to serve') : currentStatusInfo.label;
+
     container.innerHTML = `
       <div class="tracker-card">
         <div class="tracker-header-box">
@@ -158,7 +217,7 @@ class OrderTracker {
             <span class="tracker-id">ORDER #${order.id}</span>
           </div>
           <h3 class="tracker-status-title">
-            <span class="status-icon">${currentStatusInfo.icon}</span> ${currentStatusInfo.label}
+            <span class="status-icon">${currentStatusInfo.icon}</span> ${statusDisplayLabel}
           </h3>
           <p class="tracker-status-desc">${currentStatusInfo.desc}</p>
         </div>
@@ -175,31 +234,31 @@ class OrderTracker {
         <div class="tracker-stepper">
           <div class="step-item ${isStep1Active}">
             <div class="step-dot">1</div>
-            <span class="step-name">Received</span>
+            <span class="step-name">⏳ Confirmation</span>
           </div>
           <div class="step-line ${isStep2Active}"></div>
 
           <div class="step-item ${isStep2Active}">
             <div class="step-dot">2</div>
-            <span class="step-name">Preparing</span>
+            <span class="step-name">👨‍🍳 Preparing</span>
           </div>
           <div class="step-line ${isStep3Active}"></div>
 
           <div class="step-item ${isStep3Active}">
             <div class="step-dot">3</div>
-            <span class="step-name">Confirmed</span>
+            <span class="step-name">✅ Confirmed</span>
           </div>
           <div class="step-line ${isStep4Active}"></div>
 
           <div class="step-item ${isStep4Active}">
             <div class="step-dot">4</div>
-            <span class="step-name">${isDelivery ? 'Delivery' : 'Serving'}</span>
+            <span class="step-name">${isDelivery ? '🚚 Delivery' : '🍽️ Serving'}</span>
           </div>
           <div class="step-line ${isStep5Active}"></div>
 
           <div class="step-item ${isStep5Active}">
             <div class="step-dot">5</div>
-            <span class="step-name">Completed</span>
+            <span class="step-name">🎉 Completed</span>
           </div>
         </div>
 
@@ -228,16 +287,15 @@ class OrderTracker {
           </div>
         </div>
 
-        <!-- Restaurant Owner Action Control Bar (For live testing / status update) -->
+        <!-- Restaurant Owner Action Control Bar (For status automation & testing) -->
         <div class="owner-control-panel">
-          <div class="owner-panel-title">⚙️ Restaurant Owner Quick Status Action</div>
+          <div class="owner-panel-title">⚙️ Restaurant Owner - Quick Order Status Update</div>
           <div class="owner-status-buttons">
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'received')">🟡 Received</button>
+            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'confirmed')">✅ Order Accepted</button>
             <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'preparing')">👨‍🍳 Preparing</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'confirmed')">✅ Confirmed</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'transit_ready')">${isDelivery ? '🚚 Delivery' : '🍽️ Ready'}</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'completed')">🎉 Completed</button>
-            <button class="owner-act-btn cancel" onclick="orderTracker.updateOrderStatus('${order.id}', 'unavailable')">❌ Unavailable</button>
+            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'transit_ready')">${isDelivery ? '🚚 Out for Delivery' : '🍽️ Ready to Serve'}</button>
+            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'completed')">🎉 Order Completed</button>
+            <button class="owner-act-btn cancel" onclick="orderTracker.updateOrderStatus('${order.id}', 'unavailable')">❌ Item Unavailable</button>
           </div>
         </div>
       </div>

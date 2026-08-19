@@ -193,34 +193,13 @@ class CartSystem {
     cartItemsContainer.innerHTML = html;
   }
 
-  sendWhatsAppOrder() {
+  proceedToCheckout() {
     if (this.cart.length === 0) {
       alert('Please add items to your cart before ordering!');
       return;
     }
-
-    const tableNumber = (typeof tableQRSystem !== 'undefined' && tableQRSystem.getTable) ? tableQRSystem.getTable() : null;
-    const tableInfo = tableNumber ? `📍 TABLE NO: ${tableNumber}` : `🚗 TAKEAWAY / DELIVERY`;
-    const total = this.getTotalPrice();
-
-    let message = `*TACO FOODIES - NEW ORDER*\n`;
-    message += `-----------------------------\n`;
-    message += `${tableInfo}\n`;
-    message += `-----------------------------\n\n`;
-    message += `*ORDER ITEMS:*\n`;
-
-    this.cart.forEach((item, index) => {
-      message += `${index + 1}. ${item.name} (x${item.quantity}) - ₹${item.price * item.quantity}\n`;
-    });
-
-    message += `\n-----------------------------\n`;
-    message += `*TOTAL AMOUNT: ₹${total}*\n`;
-    message += `-----------------------------\n`;
-    message += `Please confirm my order & prepare fresh! 🌮🍜`;
-
-    const encodedMsg = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/918400310013?text=${encodedMsg}`;
-    window.open(whatsappUrl, '_blank');
+    this.closeCartDrawer();
+    checkoutSystem.openCheckoutForCart();
   }
 
   openCartDrawer() {
@@ -249,7 +228,7 @@ class CartSystem {
     if (overlay) overlay.addEventListener('click', () => this.closeCartDrawer());
 
     const checkoutBtn = document.getElementById('checkoutWhatsAppBtn');
-    if (checkoutBtn) checkoutBtn.addEventListener('click', () => this.sendWhatsAppOrder());
+    if (checkoutBtn) checkoutBtn.addEventListener('click', () => this.proceedToCheckout());
   }
 }
 

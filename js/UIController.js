@@ -127,7 +127,7 @@ class UIController {
 
     let html = '';
     categories.forEach(cat => {
-      const activeClass = cat === this.activeCategory ? 'active' : '';
+      const activeClass = (cat.toLowerCase() === (this.activeCategory || 'all').toLowerCase()) ? 'active' : '';
       let icon = '🍽️';
       if (cat === 'Trending') icon = '🔥';
       if (cat === 'Mexican') icon = '🌮';
@@ -137,7 +137,7 @@ class UIController {
       if (cat === 'Beverages') icon = '🥤';
 
       html += `
-        <button class="category-pill ${activeClass}" onclick="uiController.setActiveCategory('${cat}')">
+        <button class="category-pill ${activeClass}" onclick="uiController.setActiveCategory('${cat}', true)">
           <span class="pill-icon">${icon}</span>
           <span class="pill-name">${cat}</span>
         </button>
@@ -147,20 +147,27 @@ class UIController {
     container.innerHTML = html;
   }
 
-  setActiveCategory(cat) {
+  setActiveCategory(cat, shouldScroll = true) {
     this.activeCategory = cat;
     this.renderCategoryPills();
     this.renderMenuGrid();
+
+    if (shouldScroll) {
+      const menuSection = document.getElementById('digitalMenuSection');
+      if (menuSection) {
+        menuSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   }
 
   // --- 3. HORIZONTAL CAROUSELS (FLIPKART STYLE) ---
   renderHorizontalCarousels() {
     const collections = [
       { id: 'carouselTrending', title: '🔥 Trending Now', items: this.menuData.filter(i => i.isTrending) },
-      { id: 'carouselMexican', title: '🌮 Mexican Favorites', items: this.menuData.filter(i => i.category === 'Mexican') },
-      { id: 'carouselChinese', title: '🍜 Chinese Specials', items: this.menuData.filter(i => i.category === 'Chinese') },
+      { id: 'carouselMexican', title: '🌮 Mexican Favorites', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'mexican') },
+      { id: 'carouselChinese', title: '🍜 Chinese Specials', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'chinese') },
       { id: 'carouselDeals', title: '🎁 Today\'s Deals (Up to 30% OFF)', items: this.menuData.filter(i => i.isTodayDeal) },
-      { id: 'carouselBeverages', title: '🥤 Drinks & Coolers', items: this.menuData.filter(i => i.category === 'Beverages') }
+      { id: 'carouselBeverages', title: '🥤 Drinks & Coolers', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'beverages') }
     ];
 
     collections.forEach(col => {
@@ -260,13 +267,16 @@ class UIController {
     let filtered = [...this.menuData];
 
     // Filter by Category
-    if (this.activeCategory !== 'All') {
-      if (this.activeCategory === 'Trending') {
-        filtered = filtered.filter(i => i.isTrending);
-      } else if (this.activeCategory === 'Deals') {
-        filtered = filtered.filter(i => i.isTodayDeal);
+    if (this.activeCategory && this.activeCategory !== 'All') {
+      const catLower = this.activeCategory.toLowerCase();
+      if (catLower === 'trending') {
+        filtered = filtered.filter(i => i.isTrending || (i.category && i.category.toLowerCase() === 'trending'));
+      } else if (catLower === 'deals' || catLower === 'today\'s deals') {
+        filtered = filtered.filter(i => i.isTodayDeal || (i.category && i.category.toLowerCase() === 'deals'));
+      } else if (catLower.includes('combo')) {
+        filtered = filtered.filter(i => i.category && i.category.toLowerCase().includes('combo'));
       } else {
-        filtered = filtered.filter(i => i.category === this.activeCategory);
+        filtered = filtered.filter(i => i.category && i.category.toLowerCase() === catLower);
       }
     }
 

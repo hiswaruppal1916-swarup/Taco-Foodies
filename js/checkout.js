@@ -92,17 +92,38 @@ class CheckoutSystem {
     return this.currentItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
 
+  changeItemQuantity(index, delta) {
+    if (!this.currentItems || !this.currentItems[index]) return;
+    this.currentItems[index].quantity += delta;
+    if (this.currentItems[index].quantity < 1) {
+      this.currentItems[index].quantity = 1;
+    }
+    this.renderModeSelection();
+  }
+
   renderModeSelection() {
     const container = document.getElementById('checkoutModalContent');
     if (!container) return;
 
     const subtotal = this.getFoodSubtotal();
-    let itemsSummaryHtml = '';
-    this.currentItems.forEach(item => {
-      itemsSummaryHtml += `
-        <div class="checkout-item-chip">
-          <span>${item.isVeg ? '🟢' : '🔴'} ${item.name} (x${item.quantity})</span>
-          <strong>₹${item.price * item.quantity}</strong>
+    let qtySelectorHtml = '';
+    
+    this.currentItems.forEach((item, idx) => {
+      const itemTotal = item.price * item.quantity;
+      qtySelectorHtml += `
+        <div class="checkout-qty-wrapper">
+          <div class="checkout-qty-header">
+            <span>${item.isVeg ? '🟢' : '🔴'} ${item.name}</span>
+            <span class="checkout-price-formula">₹${item.price} × ${item.quantity} = ₹${itemTotal}</span>
+          </div>
+          <div class="checkout-qty-row">
+            <span style="font-weight: 700; color: var(--text-secondary); font-size: 0.9rem;">Select Quantity:</span>
+            <div class="checkout-qty-control">
+              <button type="button" class="checkout-qty-btn" onclick="checkoutSystem.changeItemQuantity(${idx}, -1)" aria-label="Decrease Quantity">-</button>
+              <span class="checkout-qty-val">${item.quantity}</span>
+              <button type="button" class="checkout-qty-btn" onclick="checkoutSystem.changeItemQuantity(${idx}, 1)" aria-label="Increase Quantity">+</button>
+            </div>
+          </div>
         </div>
       `;
     });
@@ -111,13 +132,10 @@ class CheckoutSystem {
       <div class="checkout-flow-box">
         <h3 class="checkout-title">⚡ Express Order Checkout</h3>
         
-        <div class="checkout-items-summary">
-          <div class="summary-label">Order Items:</div>
-          ${itemsSummaryHtml}
-          <div class="summary-subtotal">Food Total: <strong>₹${subtotal}</strong></div>
-        </div>
+        <!-- Large Mobile-Friendly Quantity Selector -->
+        ${qtySelectorHtml}
 
-        <h4 style="font-size: 1rem; margin: 16px 0 10px 0; color: var(--text-primary);">Choose Order Type:</h4>
+        <h4 style="font-size: 1rem; margin: 12px 0 10px 0; color: var(--text-primary);">Choose Order Type:</h4>
         <div class="checkout-mode-grid">
           <div class="mode-card ${this.currentMode === 'dine-in' ? 'active' : ''}" onclick="checkoutSystem.setMode('dine-in')">
             <span class="mode-icon">🍽️</span>
@@ -146,7 +164,7 @@ class CheckoutSystem {
     // Update active class on mode cards
     const cards = document.querySelectorAll('.mode-card');
     cards.forEach(card => {
-      if (card.getAttribute('onclick').includes(this.currentMode)) {
+      if (card.getAttribute('onclick') && card.getAttribute('onclick').includes(this.currentMode)) {
         card.classList.add('active');
       } else {
         card.classList.remove('active');
@@ -195,8 +213,8 @@ class CheckoutSystem {
           <div class="payment-badge">Payment Method: <strong>Cash on Delivery / Pay at Table</strong></div>
         </div>
 
-        <button type="button" class="whatsapp-place-btn" onclick="checkoutSystem.submitDineInOrder()">
-          💬 Confirm & Place Dine-In Order via WhatsApp
+        <button type="button" class="primary-btn full-width" style="padding: 14px; font-size: 1.05rem; justify-content: center; background: linear-gradient(135deg, var(--taco-orange) 0%, #e64a19 100%);" onclick="checkoutSystem.submitDineInOrder()">
+          ⚡ Confirm & Place Dine-In Order
         </button>
       </div>
     `;
@@ -250,8 +268,27 @@ class CheckoutSystem {
           <div class="payment-badge">Payment Method: <strong>Cash on Delivery Only</strong></div>
         </div>
 
-        <button type="button" class="whatsapp-place-btn" onclick="checkoutSystem.submitDeliveryOrder()">
-          🚚 Place Home Delivery Order via WhatsApp
+        <button type="button" class="primary-btn full-width" style="padding: 14px; font-size: 1.05rem; justify-content: center; background: linear-gradient(135deg, var(--taco-orange) 0%, #e64a19 100%);" onclick="checkoutSystem.submitDeliveryOrder()">
+          🚚 Confirm & Place Home Delivery Order
+        </button>
+      </div>
+    `;
+  }
+
+  showOrderConfirmationScreen(order) {
+    const container = document.getElementById('checkoutModalContent');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="order-confirmation-box">
+        <span class="order-conf-icon">🎉</span>
+        <h3 class="order-conf-title">Order Submitted Successfully!</h3>
+        <span class="order-conf-id-badge">Order ID: #${order.id}</span>
+        <p class="order-conf-message">
+          Please wait while the restaurant reviews your order. You can track your order status in real time.
+        </p>
+        <button class="primary-btn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem; margin-top: 10px;" onclick="checkoutSystem.closeCheckoutModal(); orderTracker.openTrackerModal('${order.id}');">
+          🛵 Track Order Status
         </button>
       </div>
     `;
@@ -274,39 +311,16 @@ class CheckoutSystem {
       paymentMethod: 'Cash on Delivery / Pay at Table'
     };
 
-    // Initialize tracking order
+    // Initialize tracking order automatically in background
     const order = orderTracker.createOrder(orderData);
-    this.closeCheckoutModal();
 
     // Clear cart if ordered from cart
     if (!this.currentDish) {
       cartSystem.clearCart();
     }
 
-    // Format WhatsApp message
-    let msg = `*NEW DINE-IN ORDER - TACO FOODIES*\n`;
-    msg += `-----------------------------\n`;
-    msg += `📍 TABLE NUMBER: ${tableNum}\n`;
-    msg += `👥 GUESTS: ${guests} Diners\n`;
-    msg += `🆔 ORDER ID: #${order.id}\n`;
-    msg += `-----------------------------\n\n`;
-    msg += `*ITEMS ORDERED:*\n`;
-    this.currentItems.forEach((item, idx) => {
-      msg += `${idx + 1}. ${item.name} (x${item.quantity}) - ₹${item.price * item.quantity}\n`;
-    });
-    msg += `\n-----------------------------\n`;
-    msg += `*TOTAL AMOUNT: ₹${subtotal}*\n`;
-    msg += `PAYMENT: Cash on Delivery / Pay at Table\n`;
-    msg += `-----------------------------\n`;
-    msg += `Please confirm table order & start cooking! 🌮🍜`;
-
-    const encodedMsg = encodeURIComponent(msg);
-    window.open(`https://wa.me/918400310013?text=${encodedMsg}`, '_blank');
-
-    // Show tracking page
-    setTimeout(() => {
-      orderTracker.openTrackerModal(order.id);
-    }, 500);
+    // Display Order Confirmation Screen directly (No WhatsApp window popup)
+    this.showOrderConfirmationScreen(order);
   }
 
   submitDeliveryOrder() {
@@ -341,39 +355,15 @@ class CheckoutSystem {
       paymentMethod: 'Cash on Delivery'
     };
 
+    // Initialize tracking order automatically in background
     const order = orderTracker.createOrder(orderData);
-    this.closeCheckoutModal();
 
     if (!this.currentDish) {
       cartSystem.clearCart();
     }
 
-    // Format WhatsApp message
-    let msg = `*NEW HOME DELIVERY ORDER - TACO FOODIES*\n`;
-    msg += `-----------------------------\n`;
-    msg += `👤 CUSTOMER: ${name}\n`;
-    msg += `📞 PHONE: ${phone}\n`;
-    msg += `🏠 ADDRESS: ${fullAddress}\n`;
-    msg += `🆔 ORDER ID: #${order.id}\n`;
-    msg += `-----------------------------\n\n`;
-    msg += `*ORDER ITEMS:*\n`;
-    this.currentItems.forEach((item, idx) => {
-      msg += `${idx + 1}. ${item.name} (x${item.quantity}) - ₹${item.price * item.quantity}\n`;
-    });
-    msg += `\n-----------------------------\n`;
-    msg += `Food Total: ₹${subtotal}\n`;
-    msg += `Delivery Charge: ₹${deliveryFee}\n`;
-    msg += `*GRAND TOTAL: ₹${grandTotal}*\n`;
-    msg += `PAYMENT: Cash on Delivery\n`;
-    msg += `-----------------------------\n`;
-    msg += `Please deliver fresh & hot! 🚚🌮`;
-
-    const encodedMsg = encodeURIComponent(msg);
-    window.open(`https://wa.me/918400310013?text=${encodedMsg}`, '_blank');
-
-    setTimeout(() => {
-      orderTracker.openTrackerModal(order.id);
-    }, 500);
+    // Display Order Confirmation Screen directly (No WhatsApp window popup)
+    this.showOrderConfirmationScreen(order);
   }
 
   setupEventListeners() {
