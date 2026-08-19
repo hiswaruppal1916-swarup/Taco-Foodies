@@ -7,6 +7,7 @@ class OwnerDashboardManager {
     this.activeFilter = 'all';
     this.activeTypeFilter = 'all';
     this.cachedOrders = [];
+    this.pollInterval = null;
   }
 
   init() {
@@ -15,7 +16,7 @@ class OwnerDashboardManager {
 
     window.addEventListener('hashchange', () => this.checkHashRoute());
 
-    // Listen for real-time order events on all owner devices
+    // 1. Supabase Realtime WebSocket listener for instant live sync across all devices
     if (typeof supabaseService !== 'undefined') {
       supabaseService.addRealtimeListener((payload) => {
         if (!payload) return;
@@ -39,12 +40,23 @@ class OwnerDashboardManager {
               this.refreshDashboardData();
             }
           } else {
-            // New order placed (INSERT) or deleted (DELETE)
             this.refreshDashboardData();
           }
         }
       });
     }
+
+    // 2. Background Heartbeat Poller (4s) for 100% fail-safe multi-device synchronization
+    this.startPollingHeartbeat();
+  }
+
+  startPollingHeartbeat() {
+    if (this.pollInterval) clearInterval(this.pollInterval);
+    this.pollInterval = setInterval(() => {
+      if (this.isDashboardVisible()) {
+        this.refreshDashboardData(true); // silent background refresh
+      }
+    }, 4000);
   }
 
   checkHashRoute() {
@@ -142,17 +154,21 @@ class OwnerDashboardManager {
     this.renderOrdersFeed();
   }
 
-  async refreshDashboardData() {
+  async refreshDashboardData(silent = false) {
     if (typeof supabaseService !== 'undefined') {
       const dbOrders = await supabaseService.fetchOwnerOrders('all', 'all');
-      this.cachedOrders = dbOrders || [];
-    } else {
-      this.cachedOrders = [];
-    }
+      
+      // Compare if data changed to avoid re-rendering DOM unnecessarily on silent polls
+      const newOrdersStr = JSON.stringify(dbOrders);
+      const oldOrdersStr = JSON.stringify(this.cachedOrders);
 
-    this.renderSummaryCards();
-    this.renderOrdersFeed();
-    this.renderAnalytics();
+      if (newOrdersStr !== oldOrdersStr || !silent) {
+        this.cachedOrders = dbOrders || [];
+        this.renderSummaryCards();
+        this.renderOrdersFeed();
+        this.renderAnalytics();
+      }
+    }
   }
 
   renderSummaryCards() {

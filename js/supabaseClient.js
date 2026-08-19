@@ -1,6 +1,6 @@
 /**
  * TACO Foodies - Supabase Centralized Database & Realtime Client
- * Single Source of Truth: Centralized Supabase Database & Realtime Sync across all customer and owner devices.
+ * 100% Centralized Supabase Database & Realtime Sync Engine for Multi-Device Operations.
  */
 class SupabaseClientService {
   constructor() {
@@ -14,37 +14,42 @@ class SupabaseClientService {
   }
 
   init() {
-    if (typeof window.supabase !== 'undefined') {
-      try {
-        this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
-        console.log('⚡ Supabase Client Connected:', this.supabaseUrl);
-        this.initOrdersRealtimeChannel();
-      } catch (e) {
-        console.warn('Supabase initialization warning:', e);
-      }
-    } else {
-      console.warn('Supabase JS SDK not loaded yet.');
-    }
+    this.getClient();
   }
 
-  // --- 0. SINGLETON REALTIME WEBSOCKET SUBSCRIPTION CHANNEL ---
+  getClient() {
+    if (!this.client && typeof window.supabase !== 'undefined') {
+      try {
+        this.client = window.supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
+        console.log('⚡ Supabase Client Initialized:', this.supabaseUrl);
+      } catch (e) {
+        console.warn('Supabase initialization error:', e);
+      }
+    }
+    if (this.client && !this.ordersChannel) {
+      this.initOrdersRealtimeChannel();
+    }
+    return this.client;
+  }
+
+  // SINGLETON REALTIME WEBSOCKET SUBSCRIPTION
   initOrdersRealtimeChannel() {
     if (!this.client || this.ordersChannel) return;
 
     try {
-      const channelId = 'orders-realtime-global-' + Math.floor(Math.random() * 1000000);
+      const channelId = 'orders-global-realtime-' + Math.floor(Math.random() * 1000000);
       this.ordersChannel = this.client
         .channel(channelId)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'orders' },
           (payload) => {
-            console.log('⚡ Supabase Realtime Order Event:', payload.eventType, payload.new || payload.old);
+            console.log('⚡ Supabase Realtime Event Received:', payload.eventType, payload.new || payload.old);
             this.notifyRealtimeListeners(payload);
           }
         )
         .subscribe((status, err) => {
-          console.log(`⚡ Realtime Orders Channel Status [${status}]`, err || '');
+          console.log(`⚡ Supabase Realtime Subscription Status: [${status}]`, err || '');
         });
     } catch (e) {
       console.warn('Realtime channel init exception:', e);
@@ -55,6 +60,7 @@ class SupabaseClientService {
     if (typeof callback === 'function') {
       this.realtimeListeners.add(callback);
     }
+    this.getClient();
     return () => {
       this.realtimeListeners.delete(callback);
     };
@@ -98,8 +104,9 @@ class SupabaseClientService {
     };
   }
 
-  // --- 1. CENTRALIZED ORDER CREATION (SUPABASE DB) ---
+  // --- 1. CREATE ORDER IN SUPABASE DATABASE ---
   async createOrder(orderPayload) {
+    const client = this.getClient();
     const orderNumber = 'TF-' + Math.floor(1000 + Math.random() * 9000);
     const orderType = (orderPayload.type === 'Dine-In') ? 'dine_in' : 'home_delivery';
 
@@ -118,7 +125,7 @@ class SupabaseClientService {
       payment_method: orderPayload.paymentMethod || 'Cash on Delivery'
     };
 
-    if (!this.client) {
+    if (!client) {
       console.error('Supabase Client unavailable!');
       return null;
     }
@@ -126,7 +133,7 @@ class SupabaseClientService {
     try {
       let customerId = null;
       if (orderPayload.customerName || orderPayload.phone) {
-        const { data: custData } = await this.client
+        const { data: custData } = await client
           .from('customers')
           .insert([{
             name: orderPayload.customerName || 'Customer',
@@ -141,7 +148,7 @@ class SupabaseClientService {
 
       orderData.customer_id = customerId;
 
-      const { data: dbOrder, error: orderErr } = await this.client
+      const { data: dbOrder, error: orderErr } = await client
         .from('orders')
         .insert([orderData])
         .select()
@@ -160,10 +167,10 @@ class SupabaseClientService {
           price: parseFloat(item.price || 0)
         }));
 
-        await this.client.from('order_items').insert(itemsToInsert);
+        await client.from('order_items').insert(itemsToInsert);
       }
 
-      const { data: fullOrder } = await this.client
+      const { data: fullOrder } = await client
         .from('orders')
         .select('*, order_items(*)')
         .eq('id', dbOrder.id)
@@ -176,19 +183,20 @@ class SupabaseClientService {
     }
   }
 
-  // --- 2. CUSTOMER ORDER FETCHING FROM SUPABASE ---
+  // --- 2. FETCH CUSTOMER ORDERS FROM SUPABASE ---
   async fetchCustomerOrders(orderNumbers = []) {
-    if (!this.client || !orderNumbers || orderNumbers.length === 0) return [];
+    const client = this.getClient();
+    if (!client || !orderNumbers || orderNumbers.length === 0) return [];
 
     try {
-      const { data, error } = await this.client
+      const { data, error } = await client
         .from('orders')
         .select('*, order_items(*)')
         .in('order_number', orderNumbers)
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('Error fetching customer orders from Supabase:', error.message);
+        console.warn('Error fetching customer orders:', error.message);
         return [];
       }
 
@@ -200,10 +208,11 @@ class SupabaseClientService {
   }
 
   async fetchOrdersByTable(tableNumber) {
-    if (!this.client || !tableNumber) return [];
+    const client = this.getClient();
+    if (!client || !tableNumber) return [];
 
     try {
-      const { data, error } = await this.client
+      const { data, error } = await client
         .from('orders')
         .select('*, order_items(*)')
         .eq('table_number', parseInt(tableNumber, 10))
@@ -221,12 +230,13 @@ class SupabaseClientService {
     }
   }
 
-  // --- 3. OWNER DASHBOARD GLOBAL ORDERS FETCHING ---
+  // --- 3. FETCH ALL OWNER ORDERS FROM SUPABASE ---
   async fetchOwnerOrders(statusFilter = 'all', typeFilter = 'all') {
-    if (!this.client) return [];
+    const client = this.getClient();
+    if (!client) return [];
 
     try {
-      let query = this.client
+      let query = client
         .from('orders')
         .select('*, order_items(*)')
         .order('created_at', { ascending: false });
@@ -255,7 +265,7 @@ class SupabaseClientService {
       const { data, error } = await query;
 
       if (error) {
-        console.warn('Error fetching owner orders from Supabase:', error.message);
+        console.warn('Error fetching owner orders:', error.message);
         return [];
       }
 
@@ -266,12 +276,13 @@ class SupabaseClientService {
     }
   }
 
-  // --- 4. ORDER STATUS UPDATE (EXACT SINGLE ORDER UPDATE WHERE order_id = selected_order_id) ---
+  // --- 4. UPDATE STATUS FOR SPECIFIC ORDER (UPDATE orders WHERE order_id = selected_id) ---
   async updateOrderStatus(orderId, newStatus) {
-    if (!this.client || !orderId) return false;
+    const client = this.getClient();
+    if (!client || !orderId) return false;
 
     try {
-      const { error } = await this.client
+      const { error } = await client
         .from('orders')
         .update({ 
           status: newStatus,
@@ -292,7 +303,6 @@ class SupabaseClientService {
     }
   }
 
-  // Backward-compatibility wrappers
   subscribeToRealtimeOrders(callback) {
     return this.addRealtimeListener(callback);
   }
@@ -308,7 +318,7 @@ class SupabaseClientService {
     });
   }
 
-  // --- 5. OWNER AUTHENTICATION & ACCESS CONTROL ---
+  // --- 5. OWNER AUTHENTICATION ---
   async ownerLogin(email, password) {
     const cleanEmail = (email || '').trim().toLowerCase();
     
@@ -319,9 +329,10 @@ class SupabaseClientService {
       };
     }
 
-    if (this.client && password) {
+    const client = this.getClient();
+    if (client && password) {
       try {
-        const { data, error } = await this.client.auth.signInWithPassword({
+        const { data, error } = await client.auth.signInWithPassword({
           email: cleanEmail,
           password: password
         });
@@ -360,9 +371,10 @@ class SupabaseClientService {
 
   ownerLogout() {
     localStorage.removeItem('taco_owner_session');
-    if (this.client) {
+    const client = this.getClient();
+    if (client) {
       try {
-        this.client.auth.signOut();
+        client.auth.signOut();
       } catch (e) {}
     }
   }

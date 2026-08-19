@@ -6,6 +6,7 @@
 class OrderTracker {
   constructor() {
     this.idListKey = 'taco_customer_order_numbers';
+    this.lastRenderedStr = '';
     this.statusMap = {
       'pending': { 
         label: 'Order Received', 
@@ -81,7 +82,7 @@ class OrderTracker {
     this.checkHashRoute();
     window.addEventListener('hashchange', () => this.checkHashRoute());
 
-    // Listen for Supabase Realtime order status updates for this customer only
+    // 1. Supabase Realtime WebSocket listener for this customer's active orders
     if (typeof supabaseService !== 'undefined') {
       supabaseService.addRealtimeListener((payload) => {
         if (!payload || !payload.new) return;
@@ -108,6 +109,14 @@ class OrderTracker {
         }
       });
     }
+
+    // 2. Fail-safe 4s polling heartbeat when tracking modal is open
+    setInterval(() => {
+      const modal = document.getElementById('orderTrackerModal');
+      if (modal && modal.classList.contains('active')) {
+        this.renderMyOrdersPage(true); // silent background refresh
+      }
+    }, 4000);
   }
 
   checkHashRoute() {
@@ -189,11 +198,18 @@ class OrderTracker {
     }
   }
 
-  async renderMyOrdersPage() {
+  async renderMyOrdersPage(silent = false) {
     const container = document.getElementById('orderTrackerContent');
     if (!container) return;
 
     const allCustomerOrders = await this.getCustomerOrdersList();
+    const currentStr = JSON.stringify(allCustomerOrders);
+
+    // Skip DOM updates on silent polls if nothing changed
+    if (silent && currentStr === this.lastRenderedStr) {
+      return;
+    }
+    this.lastRenderedStr = currentStr;
 
     if (allCustomerOrders.length === 0) {
       container.innerHTML = `
