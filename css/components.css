@@ -962,23 +962,27 @@
 /* Tracker Stepper Bar */
 .tracker-stepper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin: 10px 0;
-  padding: 0 8px;
+  margin: 16px 0 24px 0;
+  padding: 0 4px;
+  position: relative;
 }
 
 .step-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   z-index: 2;
+  flex: 1;
+  min-width: 0;
+  padding: 0 2px;
 }
 
 .step-dot {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-full);
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid var(--border-glass);
@@ -989,6 +993,7 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .step-item.active .step-dot {
@@ -999,20 +1004,26 @@
 }
 
 .step-name {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
 .step-item.active .step-name {
   color: var(--fk-yellow);
+  font-weight: 800;
 }
 
 .step-line {
   flex: 1;
   height: 3px;
   background: rgba(255, 255, 255, 0.1);
-  margin: 0 -4px 18px -4px;
+  margin-top: 17px;
+  margin-left: -10px;
+  margin-right: -10px;
   transition: background 0.3s ease;
 }
 

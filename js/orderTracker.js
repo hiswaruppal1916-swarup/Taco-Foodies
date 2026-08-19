@@ -205,11 +205,17 @@ class OrderTracker {
     const isDelivery = order.type === 'Home Delivery';
 
     let itemsHtml = '';
-    order.items.forEach(item => {
+    (order.items || []).forEach(item => {
+      const isVegDot = item.isVeg === false ? '🔴' : '🟢';
+      const itemTotal = (item.price || 0) * (item.quantity || 1);
       itemsHtml += `
-        <div class="tracker-item-row">
-          <span>${item.name} (x${item.quantity})</span>
-          <strong>₹${item.price * item.quantity}</strong>
+        <div class="tracker-item-card" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+            <span style="font-size: 0.85rem;">${isVegDot}</span>
+            <span style="font-weight: 700; font-size: 0.9rem; color: #ffffff;">${item.name}</span>
+            <span style="background: rgba(255, 87, 34, 0.2); color: var(--taco-orange); border: 1px solid rgba(255, 87, 34, 0.4); padding: 2px 8px; border-radius: var(--radius-full); font-weight: 800; font-size: 0.75rem;">x${item.quantity || 1}</span>
+          </div>
+          <strong style="font-family: var(--font-heading); font-size: 1rem; color: var(--fk-yellow); white-space: nowrap;">₹${itemTotal}</strong>
         </div>
       `;
     });
@@ -220,7 +226,6 @@ class OrderTracker {
     const isStep4Active = currentStatusInfo.step >= 4 ? 'active' : '';
     const isStep5Active = currentStatusInfo.step >= 5 ? 'active' : '';
 
-    const step4Label = isDelivery ? '🚚 Out for delivery' : '🍽️ Ready to serve';
     const statusDisplayLabel = (order.status === 'transit_ready') ? (isDelivery ? '🚚 Out for delivery' : '🍽️ Ready to serve') : currentStatusInfo.label;
 
     container.innerHTML = `
@@ -290,6 +295,7 @@ class OrderTracker {
           `}
 
           <div class="tracker-items-list">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">Ordered Items (${(order.items || []).length}):</div>
             ${itemsHtml}
           </div>
 
@@ -298,18 +304,6 @@ class OrderTracker {
             ${isDelivery ? `<div class="calc-row"><span>Delivery Fee</span><strong>₹${order.deliveryFee}</strong></div>` : ''}
             <div class="calc-row grand-total"><span>Grand Total</span><strong>₹${order.grandTotal}</strong></div>
             <div class="payment-note">Payment Method: <strong>${order.paymentMethod}</strong></div>
-          </div>
-        </div>
-
-        <!-- Restaurant Owner Action Control Bar (For status automation & testing) -->
-        <div class="owner-control-panel">
-          <div class="owner-panel-title">⚙️ Restaurant Owner - Quick Order Status Update</div>
-          <div class="owner-status-buttons">
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'confirmed')">✅ Order Accepted</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'preparing')">👨‍🍳 Preparing</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'transit_ready')">${isDelivery ? '🚚 Out for Delivery' : '🍽️ Ready to Serve'}</button>
-            <button class="owner-act-btn" onclick="orderTracker.updateOrderStatus('${order.id}', 'completed')">🎉 Order Completed</button>
-            <button class="owner-act-btn cancel" onclick="orderTracker.updateOrderStatus('${order.id}', 'unavailable')">❌ Item Unavailable</button>
           </div>
         </div>
       </div>
