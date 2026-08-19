@@ -409,12 +409,17 @@ class UIController {
   }
 
   // --- 7. RESTAURANT GALLERY LIGHTBOX ---
-  renderGalleryGrid() {
+  renderGalleryGrid(categoryFilter = 'all') {
     const container = document.getElementById('galleryGrid');
     if (!container) return;
 
+    let filtered = GALLERY_PHOTOS;
+    if (categoryFilter && categoryFilter.toLowerCase() !== 'all') {
+      filtered = GALLERY_PHOTOS.filter(p => p.category.toLowerCase() === categoryFilter.toLowerCase());
+    }
+
     let html = '';
-    GALLERY_PHOTOS.forEach(photo => {
+    filtered.forEach(photo => {
       html += `
         <div class="gallery-card" onclick="uiController.openGalleryModal('${photo.image}', '${photo.title}', '${photo.caption}')">
           <img src="${photo.image}" alt="${photo.title}" loading="lazy" class="gallery-img">
@@ -427,6 +432,17 @@ class UIController {
     });
 
     container.innerHTML = html;
+  }
+
+  filterGallery(category, btnElement) {
+    if (btnElement) {
+      const container = btnElement.parentElement;
+      if (container) {
+        container.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+      }
+    }
+    this.renderGalleryGrid(category);
   }
 
   openGalleryModal(imgUrl, title, caption) {

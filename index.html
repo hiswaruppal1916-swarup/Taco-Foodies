@@ -222,10 +222,16 @@
          8. RESTAURANT PHOTO GALLERY
          ========================================== -->
     <section class="collection-section" style="margin-top: 60px;">
-      <div class="section-header">
+      <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
         <div class="section-title-wrap">
           <h2 class="section-title">📸 Restaurant Photo Gallery</h2>
-          <span class="badge-fk-yellow">Interior & Food</span>
+          <span class="badge-fk-yellow">Real Photos & Ambiance</span>
+        </div>
+        <div class="gallery-filter-group" id="galleryFilterGroup">
+          <button class="gallery-filter-btn active" data-category="all" onclick="uiController.filterGallery('all', this)">All Photos</button>
+          <button class="gallery-filter-btn" data-category="Interior" onclick="uiController.filterGallery('Interior', this)">🏛️ Interior</button>
+          <button class="gallery-filter-btn" data-category="Food" onclick="uiController.filterGallery('Food', this)">🍲 Food & Feast</button>
+          <button class="gallery-filter-btn" data-category="Exterior" onclick="uiController.filterGallery('Exterior', this)">🌙 Night Exterior</button>
         </div>
       </div>
       <div id="galleryGrid" class="gallery-grid"></div>

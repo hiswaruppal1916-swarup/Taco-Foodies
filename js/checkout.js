@@ -297,7 +297,7 @@ class CheckoutSystem {
   async submitDineInOrder() {
     const tableInput = document.getElementById('dineInTableInput');
     const tableNum = tableInput ? parseInt(tableInput.value, 10) : 1;
-    const guests = this.selectedGuests || 2;
+    const guests = (this.selectedGuests !== null && this.selectedGuests !== undefined && !isNaN(this.selectedGuests)) ? parseInt(this.selectedGuests, 10) : 2;
     const subtotal = this.getFoodSubtotal();
 
     const orderData = {
@@ -317,9 +317,7 @@ class CheckoutSystem {
       order = await supabaseService.createOrder(orderData);
     }
     
-    if (!order && typeof orderTracker !== 'undefined') {
-      order = orderTracker.createOrder(orderData);
-    } else if (order && typeof orderTracker !== 'undefined') {
+    if (order && typeof orderTracker !== 'undefined') {
       orderTracker.registerOrder(order);
     }
 
@@ -357,6 +355,7 @@ class CheckoutSystem {
       customerName: name,
       phone: phone,
       address: fullAddress,
+      guests: 1,
       items: this.currentItems,
       foodTotal: subtotal,
       deliveryFee: deliveryFee,
@@ -370,9 +369,7 @@ class CheckoutSystem {
       order = await supabaseService.createOrder(orderData);
     }
     
-    if (!order && typeof orderTracker !== 'undefined') {
-      order = orderTracker.createOrder(orderData);
-    } else if (order && typeof orderTracker !== 'undefined') {
+    if (order && typeof orderTracker !== 'undefined') {
       orderTracker.registerOrder(order);
     }
 

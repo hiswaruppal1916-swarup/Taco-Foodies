@@ -1282,6 +1282,38 @@
 }
 
 /* --- 9. GALLERY GRID --- */
+.gallery-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gallery-filter-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gallery-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.gallery-filter-btn.active {
+  background: linear-gradient(135deg, var(--taco-orange) 0%, #e64a19 100%);
+  border-color: var(--taco-orange);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.35);
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

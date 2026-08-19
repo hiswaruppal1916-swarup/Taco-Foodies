@@ -9,69 +9,75 @@ class OrderTracker {
     this.lastRenderedStr = '';
     this.statusMap = {
       'pending': { 
-        label: 'Order Received', 
+        label: 'Waiting for restaurant confirmation', 
         icon: '⏳', 
         desc: 'Please wait while the restaurant confirms your order.', 
         step: 1 
       },
       'received': { 
-        label: 'Order Received', 
+        label: 'Waiting for restaurant confirmation', 
         icon: '⏳', 
         desc: 'Please wait while the restaurant confirms your order.', 
         step: 1 
       },
-      'preparing': { 
-        label: 'Preparing your food', 
-        icon: '👨‍🍳', 
-        desc: 'Chefs are crafting your food fresh in the kitchen!', 
+      'accepted': { 
+        label: 'Order confirmed', 
+        icon: '✅', 
+        desc: 'Restaurant confirmed your order & prep is on schedule.', 
         step: 2 
       },
       'confirmed': { 
-        label: 'Order Confirmed', 
+        label: 'Order confirmed', 
         icon: '✅', 
         desc: 'Restaurant confirmed your order & prep is on schedule.', 
-        step: 3 
+        step: 2 
       },
-      'accepted': { 
-        label: 'Order Confirmed', 
-        icon: '✅', 
-        desc: 'Restaurant accepted your order.', 
+      'preparing': { 
+        label: 'Preparing', 
+        icon: '👨‍🍳', 
+        desc: 'Chefs are preparing your food fresh in the kitchen!', 
         step: 3 
       },
       'ready': { 
-        label: 'Ready to serve / Out for delivery', 
+        label: 'Ready for serving', 
         icon: '🍽️', 
-        desc: 'Food is hot & ready for you!', 
+        desc: 'Food is hot & ready for serving/pickup!', 
         step: 4 
       },
       'transit_ready': { 
-        label: 'Out for delivery / Ready to serve', 
-        icon: '🚚', 
-        desc: 'Food is sizzling hot & ready for pickup/delivery!', 
+        label: 'Ready for serving', 
+        icon: '🍽️', 
+        desc: 'Food is hot & ready for serving/pickup!', 
         step: 4 
+      },
+      'serving': { 
+        label: 'Serving / Out for delivery', 
+        icon: '🚚', 
+        desc: 'Food is being served or out for delivery!', 
+        step: 5 
       },
       'delivering': { 
         label: 'Out for delivery', 
         icon: '🚚', 
         desc: 'Food is sizzling hot & out for delivery!', 
-        step: 4 
-      },
-      'completed': { 
-        label: 'Order Completed', 
-        icon: '🎉', 
-        desc: 'Thank you for dining with TACO Foodies!', 
         step: 5 
       },
+      'completed': { 
+        label: 'Completed', 
+        icon: '🎉', 
+        desc: 'Thank you for dining with TACO Foodies!', 
+        step: 6 
+      },
       'cancelled': { 
-        label: 'Order Cancelled', 
+        label: 'Order cancelled', 
         icon: '❌', 
-        desc: 'Order was cancelled or unavailable.', 
+        desc: 'This order was cancelled by the restaurant.', 
         step: 0 
       },
       'unavailable': { 
-        label: 'Item Unavailable', 
+        label: 'Order cancelled', 
         icon: '❌', 
-        desc: 'Sorry, this item is currently unavailable.', 
+        desc: 'This item or order was cancelled.', 
         step: 0 
       }
     };
@@ -88,11 +94,18 @@ class OrderTracker {
         if (!payload || !payload.new) return;
 
         const updatedItem = payload.new;
-        const updatedNum = updatedItem.order_number || updatedItem.id;
-        const dbId = updatedItem.id;
+        const updatedNum = String(updatedItem.order_number || updatedItem.id);
+        const dbId = String(updatedItem.id);
+        const tableNum = updatedItem.table_number;
 
         const myOrderNumbers = this.getOrderIdsList();
-        const isMyOrder = myOrderNumbers.some(num => num === updatedNum || num === dbId);
+        let myTableNum = null;
+        if (typeof tableQRScanner !== 'undefined' && tableQRScanner.tableNumber) {
+          myTableNum = parseInt(tableQRScanner.tableNumber, 10);
+        }
+
+        const isMyOrder = myOrderNumbers.some(num => String(num) === updatedNum || String(num) === dbId) ||
+                          (myTableNum && tableNum && parseInt(tableNum, 10) === myTableNum);
 
         if (isMyOrder) {
           const newStatus = updatedItem.status;
@@ -102,10 +115,8 @@ class OrderTracker {
             cartSystem.showToastNotification(`Order #${updatedNum}: ${info.label}`);
           }
 
-          const modal = document.getElementById('orderTrackerModal');
-          if (modal && modal.classList.contains('active')) {
-            this.renderMyOrdersPage();
-          }
+          // Always re-render orders page so UI stays synchronized live
+          this.renderMyOrdersPage();
         }
       });
     }
@@ -288,7 +299,11 @@ class OrderTracker {
     const isDelivery = (order.type === 'Home Delivery' || order.type === 'home_delivery');
     const currentStatusInfo = this.statusMap[order.status] || this.statusMap['pending'];
     
-    const guestDisplay = order.guests ? `${order.guests} Guests` : (isDelivery ? '' : '2 Guests');
+    const parsedGuests = (order.guests !== null && order.guests !== undefined && !isNaN(order.guests))
+      ? parseInt(order.guests, 10)
+      : (order.guest_count || (isDelivery ? 1 : 2));
+
+    const guestDisplay = `Guests: ${parsedGuests}`;
 
     let itemsHtml = '';
     (order.items || []).forEach(item => {
@@ -313,9 +328,10 @@ class OrderTracker {
     const isStep3Active = step >= 3 ? 'active' : '';
     const isStep4Active = step >= 4 ? 'active' : '';
     const isStep5Active = step >= 5 ? 'active' : '';
+    const isStep6Active = step >= 6 ? 'active' : '';
 
     const formattedTime = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
-    const statusDisplayLabel = (order.status === 'transit_ready' || order.status === 'delivering') ? (isDelivery ? '🚚 Out for Delivery' : '🍽️ Serving') : currentStatusInfo.label;
+    const statusDisplayLabel = currentStatusInfo.label;
 
     return `
       <div class="order-tracker-card ${isActive ? 'active-card' : 'history-card'}">
@@ -355,24 +371,30 @@ class OrderTracker {
 
             <div class="step-item ${isStep2Active}">
               <div class="step-dot">2</div>
-              <span class="step-name">👨‍🍳 Preparing</span>
+              <span class="step-name">✅ Confirmed</span>
             </div>
             <div class="step-line ${isStep3Active}"></div>
 
             <div class="step-item ${isStep3Active}">
               <div class="step-dot">3</div>
-              <span class="step-name">✅ Confirmed</span>
+              <span class="step-name">👨‍🍳 Preparing</span>
             </div>
             <div class="step-line ${isStep4Active}"></div>
 
             <div class="step-item ${isStep4Active}">
               <div class="step-dot">4</div>
-              <span class="step-name">${isDelivery ? '🚚 Delivery' : '🍽️ Serving'}</span>
+              <span class="step-name">🍽️ Ready</span>
             </div>
             <div class="step-line ${isStep5Active}"></div>
 
             <div class="step-item ${isStep5Active}">
               <div class="step-dot">5</div>
+              <span class="step-name">${isDelivery ? '🚚 Delivery' : '🍽️ Serving'}</span>
+            </div>
+            <div class="step-line ${isStep6Active}"></div>
+
+            <div class="step-item ${isStep6Active}">
+              <div class="step-dot">6</div>
               <span class="step-name">🎉 Completed</span>
             </div>
           </div>
@@ -385,7 +407,7 @@ class OrderTracker {
               <div>📍 <strong>Address:</strong> ${order.address || 'Address provided'}</div>
             ` : `
               <div>📍 <strong>Table Number:</strong> Table ${order.table || 1}</div>
-              <div>👥 <strong>Guests:</strong> ${guestDisplay}</div>
+              <div>👥 <strong>${guestDisplay}</strong></div>
             `}
           </div>
 

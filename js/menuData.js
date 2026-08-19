@@ -275,38 +275,66 @@ const PROMO_SLIDES = [
 const GALLERY_PHOTOS = [
   {
     id: "g1",
+    title: "Main Dining Hall & Stencil Pillars",
+    category: "Interior",
+    image: "images/gallery_dining_hall.jpg",
+    caption: "Spacious seating hall featuring teal & yellow signature stenciled pillars and ambient ceiling lights at Bhupati Nagar."
+  },
+  {
+    id: "g2",
+    title: "Grand Gourmet Food Feast",
+    category: "Food",
+    image: "images/gallery_food_spread.jpg",
+    caption: "Delicious table spread featuring Steamed Momos with fiery chutney, Szechuan Chilli Starters, Crispy Samosas, and Fresh Fruit Salad."
+  },
+  {
+    id: "g3",
+    title: "TACO Foodies Night Exterior View",
+    category: "Exterior",
+    image: "images/gallery_night_exterior.jpg",
+    caption: "Stunning night illumination with glowing red TACO Foodies neon logo, fairy lights, and blue staircase railings."
+  },
+  {
+    id: "g4",
+    title: "Cozy Dining Corner & Ambience",
+    category: "Interior",
+    image: "images/gallery_cozy_dining.jpg",
+    caption: "Warm indoor seating corner with rich wooden floors, vibrant teal walls, red drapes, and restaurant branding."
+  },
+  {
+    id: "g5",
+    title: "Signature Red Neon Logo Wall",
+    category: "Interior",
+    image: "images/gallery_neon_wall.jpg",
+    caption: "Illuminated red TACO Foodies neon fork logo wall with birthday celebration banner and custom menu table."
+  },
+  {
+    id: "g6",
     title: "Vibrant Dining Ambiance",
     category: "Interior",
     image: "images/restaurant_interior.png",
     caption: "Modern yellow and teal floral stencil walls with sleek dining tables at Bhupati Nagar."
   },
   {
-    id: "g2",
+    id: "g7",
     title: "Signature Sizzler Platter",
     category: "Food",
     image: "images/sizzling_starter.png",
-    caption: "Freshly tossed Indo-Chinese chili chicken served with raw onions & dips."
+    caption: "Freshly tossed Indo-Chinese chili chicken served on a sizzling hot plate with raw onions & dips."
   },
   {
-    id: "g3",
+    id: "g8",
     title: "Flaming Beef Taco Trio",
     category: "Food",
     image: "images/hero_taco.png",
-    caption: "Loaded Mexican taco feast topped with cilantro and melted cheese."
+    caption: "Loaded Mexican taco feast topped with cilantro and melted cheddar cheese."
   },
   {
-    id: "g4",
+    id: "g9",
     title: "Wok & Steamer Station",
     category: "Kitchen",
     image: "images/hero_chinese.png",
     caption: "Chef preparing fresh steaming dim sum dumplings and high-fire wok noodles."
-  },
-  {
-    id: "g5",
-    title: "Customer Table Setup",
-    category: "Dining",
-    image: "images/restaurant_interior.png",
-    caption: "Sleek dining setup ready for 24/7 food lovers."
   }
 ];
 

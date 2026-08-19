@@ -171,6 +171,19 @@ class OwnerDashboardManager {
     }
   }
 
+  isValidStatusTransition(currentStatus, targetStatus) {
+    if (targetStatus === 'cancelled') return true; // Any status can transition to cancelled
+
+    const flow = ['pending', 'accepted', 'preparing', 'ready', 'serving', 'completed'];
+    const curIdx = flow.indexOf(currentStatus);
+    const targetIdx = flow.indexOf(targetStatus);
+
+    if (curIdx === -1 || targetIdx === -1) return true; // Allow if unrecognized current status
+
+    // Enforce sequential workflow (e.g. pending -> accepted -> preparing -> ready -> serving -> completed)
+    return targetIdx === curIdx + 1 || targetIdx > curIdx;
+  }
+
   renderSummaryCards() {
     const orders = this.cachedOrders || [];
     const todayStr = new Date().toISOString().split('T')[0];
@@ -179,8 +192,10 @@ class OwnerDashboardManager {
     const todayRevenue = todayOrders.reduce((sum, o) => sum + (parseFloat(o.grandTotal) || 0), 0);
 
     const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'received').length;
+    const acceptedCount = orders.filter(o => o.status === 'accepted' || o.status === 'confirmed').length;
     const preparingCount = orders.filter(o => o.status === 'preparing').length;
-    const readyCount = orders.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready' || o.status === 'delivering').length;
+    const readyCount = orders.filter(o => o.status === 'ready' || o.status === 'transit_ready').length;
+    const servingCount = orders.filter(o => o.status === 'serving' || o.status === 'delivering').length;
     const completedCount = orders.filter(o => o.status === 'completed').length;
     const cancelledCount = orders.filter(o => o.status === 'cancelled' || o.status === 'unavailable').length;
 
@@ -210,6 +225,12 @@ class OwnerDashboardManager {
       </div>
 
       <div class="kpi-card blue">
+        <span class="kpi-icon">✅</span>
+        <div class="kpi-val">${acceptedCount}</div>
+        <div class="kpi-title">Accepted</div>
+      </div>
+
+      <div class="kpi-card blue">
         <span class="kpi-icon">👨‍🍳</span>
         <div class="kpi-val">${preparingCount}</div>
         <div class="kpi-title">Preparing</div>
@@ -217,12 +238,12 @@ class OwnerDashboardManager {
 
       <div class="kpi-card orange">
         <span class="kpi-icon">🍽️</span>
-        <div class="kpi-val">${readyCount}</div>
-        <div class="kpi-title">Ready</div>
+        <div class="kpi-val">${readyCount + servingCount}</div>
+        <div class="kpi-title">Ready / Serving</div>
       </div>
 
       <div class="kpi-card green">
-        <span class="kpi-icon">✅</span>
+        <span class="kpi-icon">🎉</span>
         <div class="kpi-val">${completedCount}</div>
         <div class="kpi-title">Completed</div>
       </div>
@@ -231,18 +252,6 @@ class OwnerDashboardManager {
         <span class="kpi-icon">❌</span>
         <div class="kpi-val">${cancelledCount}</div>
         <div class="kpi-title">Cancelled</div>
-      </div>
-
-      <div class="kpi-card">
-        <span class="kpi-icon">🏠</span>
-        <div class="kpi-val">${deliveryCount}</div>
-        <div class="kpi-title">Home Delivery</div>
-      </div>
-
-      <div class="kpi-card">
-        <span class="kpi-icon">📍</span>
-        <div class="kpi-val">${dineInCount}</div>
-        <div class="kpi-title">Dine-In</div>
       </div>
     `;
   }
@@ -260,10 +269,12 @@ class OwnerDashboardManager {
         filtered = filtered.filter(o => o.timestamp && o.timestamp.startsWith(todayStr));
       } else if (this.activeFilter === 'pending') {
         filtered = filtered.filter(o => o.status === 'pending' || o.status === 'received');
+      } else if (this.activeFilter === 'accepted') {
+        filtered = filtered.filter(o => o.status === 'accepted' || o.status === 'confirmed');
       } else if (this.activeFilter === 'preparing') {
         filtered = filtered.filter(o => o.status === 'preparing');
       } else if (this.activeFilter === 'ready') {
-        filtered = filtered.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready' || o.status === 'delivering');
+        filtered = filtered.filter(o => o.status === 'ready' || o.status === 'transit_ready' || o.status === 'serving' || o.status === 'delivering');
       } else if (this.activeFilter === 'completed') {
         filtered = filtered.filter(o => o.status === 'completed');
       } else if (this.activeFilter === 'cancelled') {
@@ -293,21 +304,24 @@ class OwnerDashboardManager {
       let statusColorClass = 'status-yellow';
       let statusBadgeLabel = '🟡 Pending';
 
-      if (order.status === 'preparing') {
-        statusColorClass = 'status-blue';
-        statusBadgeLabel = '👨‍🍳 Preparing';
-      } else if (order.status === 'confirmed' || order.status === 'accepted') {
+      if (order.status === 'accepted' || order.status === 'confirmed') {
         statusColorClass = 'status-blue';
         statusBadgeLabel = '✅ Accepted';
-      } else if (order.status === 'ready' || order.status === 'transit_ready' || order.status === 'delivering') {
+      } else if (order.status === 'preparing') {
+        statusColorClass = 'status-blue';
+        statusBadgeLabel = '👨‍🍳 Preparing';
+      } else if (order.status === 'ready' || order.status === 'transit_ready') {
         statusColorClass = 'status-orange';
-        statusBadgeLabel = isDelivery ? '🚚 Delivering' : '🍽️ Ready to Serve';
+        statusBadgeLabel = '🍽️ Ready';
+      } else if (order.status === 'serving' || order.status === 'delivering') {
+        statusColorClass = 'status-orange';
+        statusBadgeLabel = isDelivery ? '🚚 Out for Delivery' : '🍽️ Serving';
       } else if (order.status === 'completed') {
         statusColorClass = 'status-green';
         statusBadgeLabel = '🎉 Completed';
       } else if (order.status === 'cancelled' || order.status === 'unavailable') {
         statusColorClass = 'status-red';
-        statusBadgeLabel = '❌ Cancelled / Unavailable';
+        statusBadgeLabel = '❌ Cancelled';
       }
 
       let itemsHtml = '';
@@ -316,6 +330,10 @@ class OwnerDashboardManager {
       });
 
       const formattedTime = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
+      const guestVal = (order.guests !== null && order.guests !== undefined && !isNaN(order.guests))
+        ? order.guests
+        : (order.guest_count || 1);
 
       html += `
         <div class="owner-order-card ${statusColorClass}">
@@ -333,7 +351,7 @@ class OwnerDashboardManager {
               <span>👤 ${order.customerName || 'Customer'} (${order.phone || 'No phone'})</span>
             ` : `
               <span>📍 <strong>Dine-In (Table ${order.table || 1})</strong></span>
-              <span>👥 ${order.guests || 2} Guests</span>
+              <span>👥 Guests: ${guestVal}</span>
             `}
           </div>
 
@@ -350,13 +368,13 @@ class OwnerDashboardManager {
             <span class="card-total-val">Total: ₹${order.grandTotal}</span>
           </div>
 
-          <!-- One-Click Status Control Buttons: UPDATE orders WHERE order_id = selected_order_id -->
+          <!-- One-Click Status Control Buttons (Strict Authorized Owner Actions) -->
           <div class="one-click-controls">
-            <button class="status-btn accept" onclick="ownerDashboard.updateStatus('${order.id}', 'confirmed')" title="Accept Order">✓ Accept</button>
+            <button class="status-btn accept" onclick="ownerDashboard.updateStatus('${order.id}', 'accepted')" title="Accept Order">✓ Accept</button>
             <button class="status-btn prep" onclick="ownerDashboard.updateStatus('${order.id}', 'preparing')" title="Start Preparing">👨‍🍳 Prep</button>
-            <button class="status-btn ready" onclick="ownerDashboard.updateStatus('${order.id}', 'transit_ready')" title="Mark Ready">${isDelivery ? '🚚 Deliver' : '🍽️ Ready'}</button>
+            <button class="status-btn ready" onclick="ownerDashboard.updateStatus('${order.id}', 'ready')" title="Mark Ready">🍽️ Ready</button>
             <button class="status-btn complete" onclick="ownerDashboard.updateStatus('${order.id}', 'completed')" title="Complete Order">✅ Complete</button>
-            <button class="status-btn cancel" onclick="ownerDashboard.updateStatus('${order.id}', 'unavailable')" title="Cancel Order">❌ Cancel</button>
+            <button class="status-btn cancel" onclick="ownerDashboard.updateStatus('${order.id}', 'cancelled')" title="Cancel Order">❌ Cancel</button>
           </div>
         </div>
       `;
@@ -369,18 +387,37 @@ class OwnerDashboardManager {
   async updateStatus(orderId, newStatus) {
     if (!orderId) return;
 
-    // 1. Update ONLY the selected order in Supabase DB
-    if (typeof supabaseService !== 'undefined') {
-      await supabaseService.updateOrderStatus(orderId, newStatus);
+    // 1. Verify owner authorization
+    if (typeof supabaseService !== 'undefined' && !supabaseService.isOwnerLoggedIn()) {
+      alert('Unauthorized! Only the restaurant owner can update order status.');
+      return;
     }
 
-    // 2. Update local cached order object
-    const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
+    const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId || o.db_id === orderId);
+
+    // 2. Validate workflow transition
+    if (target && !this.isValidStatusTransition(target.status, newStatus)) {
+      alert(`Invalid workflow transition from '${target.status}' to '${newStatus}'. Workflow must follow: Pending ➔ Accepted ➔ Preparing ➔ Ready ➔ Serving ➔ Completed.`);
+      return;
+    }
+
+    // 3. Perform database update first & wait for verified success
+    let success = false;
+    if (typeof supabaseService !== 'undefined') {
+      success = await supabaseService.updateOrderStatus(orderId, newStatus);
+    }
+
+    if (!success) {
+      alert(`Database update failed for Order #${orderId}. Status was not updated.`);
+      return; // Do NOT update local state or UI if database update fails
+    }
+
+    // 4. Update local cached order object upon confirmed database update
     if (target) {
       target.status = newStatus;
     }
 
-    // 3. Re-render UI
+    // 5. Re-render owner UI
     this.renderSummaryCards();
     this.renderOrdersFeed();
     this.renderAnalytics();

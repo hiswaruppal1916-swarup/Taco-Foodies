@@ -79,17 +79,30 @@ class SupabaseClientService {
   formatDbOrder(dbo) {
     if (!dbo) return null;
     const isDelivery = (dbo.order_type === 'home_delivery' || dbo.order_type === 'Home Delivery');
+    
+    // Normalize status strings for canonical state management
+    let normStatus = dbo.status || 'pending';
+    if (normStatus === 'confirmed') normStatus = 'accepted';
+    if (normStatus === 'transit_ready') normStatus = 'ready';
+    if (normStatus === 'delivering') normStatus = 'serving';
+    if (normStatus === 'unavailable') normStatus = 'cancelled';
+    if (normStatus === 'received') normStatus = 'pending';
+
+    const guestVal = (dbo.guest_count !== null && dbo.guest_count !== undefined && !isNaN(dbo.guest_count))
+      ? parseInt(dbo.guest_count, 10)
+      : (dbo.table_number ? 2 : 1);
+
     return {
       id: dbo.order_number || dbo.id,
       order_number: dbo.order_number || dbo.id,
       db_id: dbo.id,
       timestamp: dbo.created_at || new Date().toISOString(),
-      status: dbo.status || 'pending',
+      status: normStatus,
       type: isDelivery ? 'Home Delivery' : 'Dine-In',
       customerName: dbo.customer_name || (dbo.table_number ? `Dine-In (Table ${dbo.table_number})` : 'Customer'),
       phone: dbo.customer_phone || '',
       table: dbo.table_number || null,
-      guests: dbo.guest_count || (dbo.table_number ? 2 : null),
+      guests: guestVal,
       address: dbo.delivery_address || null,
       items: (dbo.order_items || []).map(i => ({
         name: i.item_name,
@@ -110,6 +123,10 @@ class SupabaseClientService {
     const orderNumber = 'TF-' + Math.floor(1000 + Math.random() * 9000);
     const orderType = (orderPayload.type === 'Dine-In') ? 'dine_in' : 'home_delivery';
 
+    const parsedGuests = (orderPayload.guests !== null && orderPayload.guests !== undefined && !isNaN(orderPayload.guests))
+      ? parseInt(orderPayload.guests, 10)
+      : (orderPayload.table ? 2 : 1);
+
     const orderData = {
       order_number: orderNumber,
       order_type: orderType,
@@ -117,7 +134,7 @@ class SupabaseClientService {
       customer_name: orderPayload.customerName || (orderPayload.table ? `Dine-In (Table ${orderPayload.table})` : 'Customer'),
       customer_phone: orderPayload.phone || '',
       delivery_address: orderPayload.address || null,
-      guest_count: orderPayload.guests ? parseInt(orderPayload.guests, 10) : 2,
+      guest_count: parsedGuests,
       subtotal: parseFloat(orderPayload.foodTotal || orderPayload.grandTotal || 0),
       delivery_fee: parseFloat(orderPayload.deliveryFee || 0),
       total: parseFloat(orderPayload.grandTotal || 0),
@@ -244,10 +261,14 @@ class SupabaseClientService {
       if (statusFilter && statusFilter !== 'all') {
         if (statusFilter === 'pending') {
           query = query.in('status', ['pending', 'received']);
+        } else if (statusFilter === 'accepted') {
+          query = query.in('status', ['accepted', 'confirmed']);
         } else if (statusFilter === 'preparing') {
           query = query.eq('status', 'preparing');
         } else if (statusFilter === 'ready') {
-          query = query.in('status', ['ready', 'confirmed', 'accepted', 'transit_ready', 'delivering']);
+          query = query.in('status', ['ready', 'transit_ready']);
+        } else if (statusFilter === 'serving') {
+          query = query.in('status', ['serving', 'delivering']);
         } else if (statusFilter === 'completed') {
           query = query.eq('status', 'completed');
         } else if (statusFilter === 'cancelled') {
@@ -276,29 +297,42 @@ class SupabaseClientService {
     }
   }
 
-  // --- 4. UPDATE STATUS FOR SPECIFIC ORDER (UPDATE orders WHERE order_id = selected_id) ---
+  // --- 4. UPDATE STATUS FOR SPECIFIC ORDER (UPDATE orders WHERE order_number = selected_id) ---
   async updateOrderStatus(orderId, newStatus) {
     const client = this.getClient();
     if (!client || !orderId) return false;
 
     try {
-      const { error } = await client
-        .from('orders')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .or(`order_number.eq.${orderId},id.eq.${orderId}`);
+      const cleanId = String(orderId).trim();
+      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+
+      let query = client.from('orders').update({ 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      });
+
+      if (isUuid) {
+        query = query.or(`id.eq.${cleanId},order_number.eq.${cleanId}`);
+      } else {
+        query = query.eq('order_number', cleanId);
+      }
+
+      const { data, error } = await query.select();
 
       if (error) {
-        console.warn('Error updating status in Supabase:', error.message);
+        console.error('Error updating status in Supabase:', error.message);
         return false;
       }
 
-      console.log(`✅ Order #${orderId} updated to status '${newStatus}' in Supabase`);
+      if (!data || data.length === 0) {
+        console.warn(`No order record found in database matching identifier #${cleanId}`);
+        return false;
+      }
+
+      console.log(`✅ Order #${cleanId} updated to status '${newStatus}' in Supabase database`);
       return true;
     } catch (e) {
-      console.warn('Exception updating order status:', e);
+      console.error('Exception updating order status:', e);
       return false;
     }
   }
