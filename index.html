@@ -36,6 +36,12 @@
 
         <!-- Header Action Controls -->
         <div class="header-actions">
+          <!-- Permanent Sticky Call & WhatsApp Buttons -->
+          <div class="header-contact-actions">
+            <a href="tel:08400310013" class="header-call-btn" title="Call TACO Foodies">📞 Call Now</a>
+            <a href="https://wa.me/918400310013" target="_blank" class="header-wa-btn" title="Chat on WhatsApp">💬 WhatsApp</a>
+          </div>
+
           <!-- Table QR Indicator Badge -->
           <button id="headerTableBadge" class="table-badge-btn" onclick="tableQRSystem.openTablePicker()">
             📍 Select Table
@@ -94,8 +100,8 @@
          ========================================== -->
     <section class="deals-countdown-banner">
       <div class="deal-text-box">
-        <span class="badge-fk-yellow">⚡ FLIPKART STEAL DEALS</span>
-        <h3>Today's Special Food Offers (Up to 30% OFF)</h3>
+        <span class="badge-fk-yellow">⚡ TACO FOODIES SPECIAL DEALS</span>
+        <h3>TACO Foodies Special Deals (Up to 30% OFF)</h3>
         <p>Grab discounted Mexican Tacos & Indo-Chinese Combos before the timer ends!</p>
       </div>
 
@@ -118,7 +124,7 @@
     </section>
 
     <!-- ==========================================
-         6. HORIZONTAL FOOD CAROUSELS (FLIPKART STYLE)
+         6. HORIZONTAL FOOD CAROUSELS
          ========================================== -->
     <!-- 🔥 Trending Now -->
     <section class="collection-section">
@@ -347,8 +353,8 @@
         <span id="cartTotalAmount">₹0</span>
       </div>
 
-      <button id="checkoutWhatsAppBtn" class="whatsapp-checkout-btn">
-        💬 Confirm & Order via WhatsApp
+      <button id="checkoutWhatsAppBtn" class="whatsapp-checkout-btn" onclick="checkoutSystem.openCheckoutForCart()">
+        ⚡ Proceed to Express Checkout
       </button>
     </div>
   </aside>
@@ -370,6 +376,11 @@
     <button class="floating-action-item active open-cart-btn">
       <span class="icon">🛒</span>
       <span id="floatingCartTotal">₹0</span>
+    </button>
+
+    <button class="floating-action-item" onclick="orderTracker.openTrackerModal()">
+      <span class="icon">🛵</span>
+      <span>Track</span>
     </button>
 
     <a href="tel:08400310013" class="floating-action-item">
@@ -440,7 +451,6 @@
       </p>
 
       <div class="table-grid-selector" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px;">
-        <!-- Generated dynamically or clickable numbers -->
         <button class="table-num-btn" onclick="tableQRSystem.setTable(1)">T-1</button>
         <button class="table-num-btn" onclick="tableQRSystem.setTable(2)">T-2</button>
         <button class="table-num-btn" onclick="tableQRSystem.setTable(3)">T-3</button>
@@ -462,11 +472,33 @@
     </div>
   </div>
 
+  <!-- ==========================================
+       17. EXPRESS CHECKOUT MODAL (Dine In / Home Delivery)
+       ========================================== -->
+  <div id="checkoutModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 580px;">
+      <button id="closeCheckoutModalBtn" class="close-modal-btn">✕</button>
+      <div id="checkoutModalContent"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       18. REAL-TIME ORDER TRACKER MODAL
+       ========================================== -->
+  <div id="orderTrackerModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 600px;">
+      <button id="closeTrackerModalBtn" class="close-modal-btn">✕</button>
+      <div id="orderTrackerContent"></div>
+    </div>
+  </div>
+
   <!-- JavaScript Modules -->
   <script src="js/menuData.js"></script>
   <script src="js/tableQR.js"></script>
   <script src="js/googleSheetsSync.js"></script>
   <script src="js/cart.js"></script>
+  <script src="js/checkout.js"></script>
+  <script src="js/orderTracker.js"></script>
   <script src="js/UIController.js"></script>
   <script src="js/app.js"></script>
 </body>

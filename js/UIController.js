@@ -219,9 +219,14 @@ class UIController {
               <span class="curr-price">₹${dish.price}</span>
               ${dish.originalPrice > dish.price ? `<span class="orig-price">₹${dish.originalPrice}</span>` : ''}
             </div>
-            <button class="add-to-cart-btn" onclick="event.stopPropagation(); uiController.quickAddToCart('${dish.id}', this)" aria-label="Add ${dish.name} to Cart">
-              <span>🛒 Add to Cart</span>
-            </button>
+            <div class="card-action-group">
+              <button class="add-to-cart-btn" onclick="event.stopPropagation(); uiController.quickAddToCart('${dish.id}', this)" aria-label="Add ${dish.name} to Cart">
+                <span>🛒 Add</span>
+              </button>
+              <button class="buy-now-btn" onclick="event.stopPropagation(); checkoutSystem.openCheckoutForDish(uiController.menuData.find(d=>d.id==='${dish.id}'))" aria-label="Buy ${dish.name} Now">
+                <span>⚡ Buy Now</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
