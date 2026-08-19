@@ -107,6 +107,10 @@ class OrderTracker {
     }
   }
 
+  getAllOrders() {
+    return this.getAllOrdersMap();
+  }
+
   registerOrder(newOrder) {
     if (!newOrder || !newOrder.id) return newOrder;
 
@@ -210,10 +214,14 @@ class OrderTracker {
     modal.classList.add('active');
   }
 
+  openTrackerModal() {
+    this.openMyOrdersModal();
+  }
+
   closeTrackerModal() {
     const modal = document.getElementById('orderTrackerModal');
     if (modal) modal.classList.remove('active');
-    if (window.location.hash === '#my-orders') {
+    if (window.location.hash === '#my-orders' || window.location.hash === '#track-order') {
       window.location.hash = '';
     }
   }
