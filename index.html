@@ -34,27 +34,14 @@
           <input type="text" id="headerSearchInput" class="header-search-input" placeholder="Search Tacos, Sizzlers, Dim Sum, Hakka Noodles...">
         </div>
 
-        <!-- Header Action Controls -->
+        <!-- Top Header Action Controls (Display ONLY Call Now & WhatsApp) -->
         <div class="header-actions">
-          <!-- Permanent Sticky Call & WhatsApp Buttons -->
           <div class="header-contact-actions">
             <a href="tel:08400310013" class="header-call-btn" title="Call TACO Foodies">📞 Call Now</a>
             <a href="https://wa.me/918400310013" target="_blank" class="header-wa-btn" title="Chat on WhatsApp">💬 WhatsApp</a>
           </div>
 
-          <!-- Table QR Indicator Badge -->
-          <button id="headerTableBadge" class="table-badge-btn" onclick="tableQRSystem.openTablePicker()">
-            📍 Select Table
-          </button>
-
-          <!-- Cart Button -->
-          <button class="header-cart-btn open-cart-btn">
-            <span>🛒</span>
-            <span>Cart</span>
-            <span id="cartCountBadge" class="cart-count-badge">0</span>
-          </button>
-
-          <!-- Owner Google Sheet Sync Modal Button -->
+          <!-- Owner Google Sheet Sync Settings Icon Button -->
           <button id="openOwnerSyncModalBtn" class="owner-sync-icon-btn" title="Owner Google Sheet Settings">
             ⚙️
           </button>
@@ -370,7 +357,7 @@
 
     <button class="floating-action-item" onclick="tableQRSystem.openTablePicker()">
       <span class="icon">📍</span>
-      <span>Table</span>
+      <span id="mobileTableBadgeText">Table</span>
     </button>
 
     <button class="floating-action-item active open-cart-btn">

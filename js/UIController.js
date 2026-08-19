@@ -363,11 +363,11 @@ class UIController {
           </div>
 
           <div class="detail-actions">
-            <button class="primary-btn full-width" onclick="uiController.addModalDishToCart('${dish.id}')">
-              🛒 Add to Cart
+            <button class="buy-now-btn full-width" style="padding: 12px; font-size: 0.95rem; justify-content: center;" onclick="uiController.closeDishDetailModal(); checkoutSystem.openCheckoutForDish(uiController.menuData.find(d=>d.id==='${dish.id}'))">
+              ⚡ Buy Now (Express Order)
             </button>
-            <button class="secondary-btn full-width" style="background: #25d366; color: #fff; border: none;" onclick="uiController.addModalDishToCart('${dish.id}'); uiController.closeDishDetailModal(); cartSystem.sendWhatsAppOrder();">
-              💬 Order via WhatsApp
+            <button class="add-to-cart-btn full-width" style="padding: 12px; font-size: 0.95rem; justify-content: center;" onclick="uiController.addModalDishToCart('${dish.id}')">
+              🛒 Add to Cart
             </button>
           </div>
         </div>

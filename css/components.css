@@ -1867,38 +1867,235 @@
   box-shadow: 0 0 12px rgba(0, 180, 216, 0.5);
 }
 
-/* Responsive Media Queries */
+/* Responsive Media Queries & Mobile Optimization */
 @media (max-width: 768px) {
+  .header-top-bar {
+    gap: 6px;
+    padding: 8px 0;
+  }
+
+  .header-contact-actions {
+    display: flex !important;
+    gap: 4px;
+  }
+
+  .header-call-btn, .header-wa-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .brand-logo {
+    gap: 6px;
+  }
+
+  .brand-logo .logo-icon {
+    font-size: 1.5rem;
+  }
+
+  .brand-logo .main-name {
+    font-size: 0.95rem;
+  }
+
+  .brand-logo .tagline {
+    font-size: 0.55rem;
+  }
+
+  .table-badge-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+  }
+
+  .header-cart-btn {
+    padding: 5px 9px;
+    font-size: 0.78rem;
+  }
+
+  .owner-sync-icon-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .hero-slider-container {
+    margin: 12px 0 20px 0;
+    border-radius: var(--radius-md);
+  }
+
+  .hero-slider-track {
+    min-height: 330px;
+  }
+
   .hero-slide {
-    padding: 24px;
+    padding: 20px 16px;
   }
+
+  .slide-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    margin-bottom: 6px;
+  }
+
   .slide-title {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
+    line-height: 1.2;
+    margin-bottom: 6px;
   }
+
+  .slide-subtitle {
+    font-size: 0.82rem;
+    margin-bottom: 10px;
+  }
+
+  .slide-offer-row {
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .slide-offer {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .slide-code {
+    font-size: 0.75rem;
+  }
+
+  .slide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .slide-actions .primary-btn,
+  .slide-actions .secondary-btn,
+  .slide-actions .hero-add-cart-btn {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .slider-nav-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .slider-nav-btn.prev { left: 6px; }
+  .slider-nav-btn.next { right: 6px; }
+
+  .deals-countdown-banner {
+    padding: 16px;
+    margin-bottom: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .deal-text-box h3 {
+    font-size: 1.2rem;
+  }
+
+  .deal-text-box p {
+    font-size: 0.8rem;
+  }
+
+  .timer-unit {
+    min-width: 44px;
+    padding: 6px 8px;
+  }
+
+  .timer-num {
+    font-size: 1.1rem;
+  }
+
   .contact-section-grid {
     grid-template-columns: 1fr;
   }
+
   .header-search-wrapper {
-    display: none; /* Hide header search on small phones, available in menu controls */
+    display: none;
   }
+
   .detail-actions {
     flex-direction: column;
   }
+
   .form-grid {
     grid-template-columns: 1fr;
   }
+
   .form-group.full-col {
     grid-column: span 1;
   }
+
   .checkout-mode-grid {
     grid-template-columns: 1fr;
   }
-  .card-action-group {
-    flex-direction: column;
-    width: 100%;
+
+  .modal-backdrop {
+    padding: 10px;
   }
+
+  .modal-box {
+    max-width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .cart-drawer {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 0 10px;
+  }
+
+  .flipkart-food-card.carousel-card {
+    min-width: 220px;
+    max-width: 220px;
+  }
+
+  .food-img-wrapper {
+    height: 145px;
+  }
+
+  .food-card-body {
+    padding: 10px;
+  }
+
+  .food-title {
+    font-size: 0.9rem;
+  }
+
+  .food-desc {
+    font-size: 0.75rem;
+  }
+
+  .curr-price {
+    font-size: 1.05rem;
+  }
+
+  .main-menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-action-group {
+    flex-direction: row;
+    width: 100%;
+    gap: 5px;
+  }
+
   .card-action-group .add-to-cart-btn,
   .card-action-group .buy-now-btn {
-    width: 100%;
+    flex: 1;
+    padding: 7px 4px;
+    font-size: 0.72rem;
+    justify-content: center;
   }
 }

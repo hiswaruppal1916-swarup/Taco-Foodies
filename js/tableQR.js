@@ -50,6 +50,10 @@ class TableQRSystem {
       headerBadge.innerHTML = `📍 Table ${tableNumber}`;
       headerBadge.classList.add('active');
     }
+    const mobileBadgeText = document.getElementById('mobileTableBadgeText');
+    if (mobileBadgeText) {
+      mobileBadgeText.textContent = `T-${tableNumber}`;
+    }
   }
 
   openTablePicker() {
