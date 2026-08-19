@@ -1,13 +1,18 @@
 /**
  * TACO Foodies - Restaurant Owner Dashboard & Auth Engine
- * Handles Protected Routes (/owner-login & /owner-dashboard),
- * Summary KPI Cards, Realtime Order Feed, Color-Coded Cards,
- * One-Click Status Controls, and Sales Analytics.
+ * Single Source of Truth: Centralized Supabase Database & Realtime Sync.
+ * Features:
+ * 1. Protected Routes (/owner-login & /owner-dashboard)
+ * 2. Summary KPI Cards (Today's Orders, Revenue, Pending, Prep, Ready, Complete, Cancelled, Delivery, Dine-In)
+ * 3. Realtime Order Feed from all customer devices
+ * 4. One-Click Status Controls (UPDATE orders WHERE order_id = selected_order_id)
+ * 5. Sales Analytics
  */
 class OwnerDashboardManager {
   constructor() {
     this.activeFilter = 'all';
     this.activeTypeFilter = 'all';
+    this.cachedOrders = [];
   }
 
   init() {
@@ -16,9 +21,9 @@ class OwnerDashboardManager {
 
     window.addEventListener('hashchange', () => this.checkHashRoute());
 
-    // Realtime update listener for owner dashboard
+    // Supabase Realtime synchronization for Owner Dashboard across all devices
     if (typeof supabaseService !== 'undefined') {
-      supabaseService.subscribeToAllOrders(() => {
+      supabaseService.subscribeToRealtimeOrders((payload) => {
         if (this.isDashboardVisible()) {
           this.refreshDashboardData();
         }
@@ -121,55 +126,15 @@ class OwnerDashboardManager {
     this.renderOrdersFeed();
   }
 
-  getAllLocalAndDbOrders() {
-    let allOrdersMap = {};
-
-    // Get orders from local storage
-    if (typeof orderTracker !== 'undefined' && orderTracker.getAllOrders) {
-      allOrdersMap = orderTracker.getAllOrders();
-    }
-
-    return Object.values(allOrdersMap);
-  }
-
   async refreshDashboardData() {
-    let localOrders = this.getAllLocalAndDbOrders();
-    let ordersMap = {};
-
-    localOrders.forEach(o => {
-      if (o && o.id) ordersMap[o.id] = o;
-    });
-
-    // Combine with Supabase DB orders if connected
-    if (typeof supabaseService !== 'undefined' && supabaseService.client) {
+    // 100% Centralized Supabase Database fetching across ALL customer devices
+    if (typeof supabaseService !== 'undefined') {
       const dbOrders = await supabaseService.fetchOwnerOrders('all', 'all');
-      if (dbOrders && dbOrders.length > 0) {
-        dbOrders.forEach(dbo => {
-          const formatted = {
-            id: dbo.order_number || dbo.id,
-            db_id: dbo.id,
-            timestamp: dbo.created_at,
-            status: dbo.status,
-            type: (dbo.order_type === 'dine_in') ? 'Dine-In' : 'Home Delivery',
-            customerName: dbo.customer_name || 'Customer',
-            phone: dbo.customer_phone || '',
-            table: dbo.table_number || null,
-            guests: dbo.guest_count || 2,
-            address: dbo.delivery_address || null,
-            items: (dbo.order_items || []).map(i => ({ name: i.item_name, quantity: i.quantity, price: i.price })),
-            foodTotal: dbo.subtotal,
-            deliveryFee: dbo.delivery_fee,
-            grandTotal: dbo.total,
-            paymentMethod: dbo.payment_method || 'Cash on Delivery'
-          };
-
-          // Override local copy with database record
-          ordersMap[formatted.id] = formatted;
-        });
-      }
+      this.cachedOrders = dbOrders || [];
+    } else {
+      this.cachedOrders = [];
     }
 
-    this.cachedOrders = Object.values(ordersMap).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     this.renderSummaryCards();
     this.renderOrdersFeed();
     this.renderAnalytics();
@@ -184,7 +149,7 @@ class OwnerDashboardManager {
 
     const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'received').length;
     const preparingCount = orders.filter(o => o.status === 'preparing').length;
-    const readyCount = orders.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready').length;
+    const readyCount = orders.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready' || o.status === 'delivering').length;
     const completedCount = orders.filter(o => o.status === 'completed').length;
     const cancelledCount = orders.filter(o => o.status === 'cancelled' || o.status === 'unavailable').length;
 
@@ -267,7 +232,7 @@ class OwnerDashboardManager {
       } else if (this.activeFilter === 'preparing') {
         filtered = filtered.filter(o => o.status === 'preparing');
       } else if (this.activeFilter === 'ready') {
-        filtered = filtered.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready');
+        filtered = filtered.filter(o => o.status === 'ready' || o.status === 'confirmed' || o.status === 'accepted' || o.status === 'transit_ready' || o.status === 'delivering');
       } else if (this.activeFilter === 'completed') {
         filtered = filtered.filter(o => o.status === 'completed');
       } else if (this.activeFilter === 'cancelled') {
@@ -284,7 +249,7 @@ class OwnerDashboardManager {
         <div class="no-orders-box">
           <span class="no-orders-icon">📋</span>
           <h4>No orders matching filter</h4>
-          <p>Incoming customer orders will appear here automatically in real time.</p>
+          <p>Incoming customer orders from all devices will appear here automatically in real time.</p>
         </div>
       `;
       return;
@@ -294,8 +259,7 @@ class OwnerDashboardManager {
     filtered.forEach(order => {
       const isDelivery = (order.type === 'Home Delivery' || order.type === 'home_delivery');
       
-      // Color coding badges
-      let statusColorClass = 'status-yellow'; // default pending
+      let statusColorClass = 'status-yellow';
       let statusBadgeLabel = '🟡 Pending';
 
       if (order.status === 'preparing') {
@@ -304,7 +268,7 @@ class OwnerDashboardManager {
       } else if (order.status === 'confirmed' || order.status === 'accepted') {
         statusColorClass = 'status-blue';
         statusBadgeLabel = '✅ Accepted';
-      } else if (order.status === 'ready' || order.status === 'transit_ready') {
+      } else if (order.status === 'ready' || order.status === 'transit_ready' || order.status === 'delivering') {
         statusColorClass = 'status-orange';
         statusBadgeLabel = isDelivery ? '🚚 Delivering' : '🍽️ Ready to Serve';
       } else if (order.status === 'completed') {
@@ -355,7 +319,7 @@ class OwnerDashboardManager {
             <span class="card-total-val">Total: ₹${order.grandTotal}</span>
           </div>
 
-          <!-- One-Click Status Control Buttons -->
+          <!-- One-Click Status Control Buttons: UPDATE orders WHERE order_id = selected_order_id -->
           <div class="one-click-controls">
             <button class="status-btn accept" onclick="ownerDashboard.updateStatus('${order.id}', 'confirmed')" title="Accept Order">✓ Accept</button>
             <button class="status-btn prep" onclick="ownerDashboard.updateStatus('${order.id}', 'preparing')" title="Start Preparing">👨‍🍳 Prep</button>
@@ -370,18 +334,25 @@ class OwnerDashboardManager {
     container.innerHTML = html;
   }
 
+  // UPDATE ONLY THE SELECTED ORDER IN SUPABASE DATABASE
   async updateStatus(orderId, newStatus) {
-    // Update local order tracker state
-    if (typeof orderTracker !== 'undefined') {
-      orderTracker.updateOrderStatus(orderId, newStatus);
-    }
+    if (!orderId) return;
 
-    // Update Supabase database
+    // 1. Update ONLY the selected order in Supabase DB
     if (typeof supabaseService !== 'undefined') {
       await supabaseService.updateOrderStatus(orderId, newStatus);
     }
 
-    this.refreshDashboardData();
+    // 2. Update local cached order object
+    const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
+    if (target) {
+      target.status = newStatus;
+    }
+
+    // 3. Re-render UI
+    this.renderSummaryCards();
+    this.renderOrdersFeed();
+    this.renderAnalytics();
   }
 
   renderAnalytics() {
@@ -393,7 +364,6 @@ class OwnerDashboardManager {
     const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.grandTotal) || 0), 0);
     const avgOrderVal = totalOrdersCount > 0 ? Math.round(totalRevenue / totalOrdersCount) : 0;
 
-    // Item popularity calculation
     const itemMap = {};
     orders.forEach(o => {
       (o.items || []).forEach(i => {

@@ -1,16 +1,15 @@
 /**
  * TACO Foodies - Multi-Order Tracking System ("My Orders" / #my-orders)
+ * Single Source of Truth: Centralized Supabase Database & Realtime Sync.
  * Supports:
- * 1. Multi-Order Dine-In Tracking (by Table Number)
- * 2. Multi-Order Home Delivery Tracking (by Phone / Device ID)
+ * 1. Multi-Order Dine-In Tracking (by Table Number & Supabase DB)
+ * 2. Multi-Order Home Delivery Tracking (by Supabase Order ID)
  * 3. Independent 5-stage stepper timeline for every order
  * 4. Active Orders vs. Completed Orders (Order History)
- * 5. Sanitized guest count (never outputs 'undefined Guests')
  */
 class OrderTracker {
   constructor() {
-    this.storageKey = 'taco_foodies_orders_v1';
-    this.idListKey = 'taco_foodies_all_order_ids';
+    this.idListKey = 'taco_customer_order_numbers';
     this.statusMap = {
       'pending': { 
         label: 'Order Received', 
@@ -54,6 +53,12 @@ class OrderTracker {
         desc: 'Food is sizzling hot & ready for pickup/delivery!', 
         step: 4 
       },
+      'delivering': { 
+        label: 'Out for delivery', 
+        icon: '🚚', 
+        desc: 'Food is sizzling hot & out for delivery!', 
+        step: 4 
+      },
       'completed': { 
         label: 'Order Completed', 
         icon: '🎉', 
@@ -76,10 +81,33 @@ class OrderTracker {
   }
 
   init() {
-    this.setupStorageSyncListener();
     this.setupEventListeners();
     this.checkHashRoute();
     window.addEventListener('hashchange', () => this.checkHashRoute());
+
+    // Listen for Supabase Realtime order status updates for this customer
+    if (typeof supabaseService !== 'undefined') {
+      supabaseService.subscribeToRealtimeOrders((payload) => {
+        if (payload && payload.eventType === 'UPDATE' && payload.new) {
+          const updatedNum = payload.new.order_number || payload.new.id;
+          const myOrderNumbers = this.getOrderIdsList();
+
+          if (myOrderNumbers.includes(updatedNum) || myOrderNumbers.includes(payload.new.id)) {
+            const newStatus = payload.new.status;
+            const info = this.statusMap[newStatus] || { label: newStatus, icon: '🔔' };
+
+            if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+              cartSystem.showToastNotification(`Order #${updatedNum}: ${info.label}`);
+            }
+
+            const modal = document.getElementById('orderTrackerModal');
+            if (modal && modal.classList.contains('active')) {
+              this.renderMyOrdersPage();
+            }
+          }
+        }
+      });
+    }
   }
 
   checkHashRoute() {
@@ -98,111 +126,46 @@ class OrderTracker {
     }
   }
 
-  getAllOrdersMap() {
-    try {
-      const data = localStorage.getItem(this.storageKey);
-      return data ? JSON.parse(data) : {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  getAllOrders() {
-    return this.getAllOrdersMap();
-  }
-
   registerOrder(newOrder) {
     if (!newOrder || !newOrder.id) return newOrder;
 
-    // Sanitize guest count to eliminate 'undefined Guests'
-    const cleanGuests = newOrder.guests ? newOrder.guests : (newOrder.type === 'Dine-In' ? 2 : null);
-    newOrder.guests = cleanGuests;
-
-    const ordersMap = this.getAllOrdersMap();
-    ordersMap[newOrder.id] = newOrder;
-    localStorage.setItem(this.storageKey, JSON.stringify(ordersMap));
-
+    const orderNum = newOrder.order_number || newOrder.id;
     const idList = this.getOrderIdsList();
-    if (!idList.includes(newOrder.id)) {
-      idList.push(newOrder.id);
+    if (!idList.includes(orderNum)) {
+      idList.push(orderNum);
       localStorage.setItem(this.idListKey, JSON.stringify(idList));
-    }
-    localStorage.setItem('taco_foodies_current_order_id', newOrder.id);
-
-    // Subscribe to Supabase Realtime changes for this order
-    if (typeof supabaseService !== 'undefined') {
-      supabaseService.subscribeToOrderUpdates(newOrder.id, (updatedDbRecord) => {
-        if (updatedDbRecord && updatedDbRecord.status) {
-          this.updateOrderStatus(newOrder.id, updatedDbRecord.status);
-        }
-      });
     }
 
     if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
-      cartSystem.showToastNotification(`🎉 Order #${newOrder.id} placed successfully!`);
+      cartSystem.showToastNotification(`🎉 Order #${orderNum} placed successfully!`);
     }
 
     return newOrder;
   }
 
-  createOrder(orderData) {
-    const id = 'TF-' + Math.floor(1000 + Math.random() * 9000);
-    const newOrder = {
-      id: id,
-      timestamp: new Date().toISOString(),
-      status: 'pending',
-      type: orderData.type,
-      customerName: orderData.customerName || (orderData.table ? `Dine-In (Table ${orderData.table})` : 'Customer'),
-      phone: orderData.phone || '',
-      table: orderData.table || null,
-      guests: orderData.guests || (orderData.table ? 2 : null),
-      address: orderData.address || null,
-      items: orderData.items || [],
-      foodTotal: orderData.foodTotal || 0,
-      deliveryFee: orderData.deliveryFee || 0,
-      grandTotal: orderData.grandTotal || 0,
-      paymentMethod: orderData.paymentMethod || 'Cash on Delivery',
-      prepTime: '15–20 minutes'
-    };
+  async getCustomerOrdersList() {
+    const orderNumbers = this.getOrderIdsList();
 
-    return this.registerOrder(newOrder);
-  }
-
-  getOrder(id) {
-    const orders = this.getAllOrdersMap();
-    return orders[id] || null;
-  }
-
-  updateOrderStatus(id, newStatus) {
-    const orders = this.getAllOrdersMap();
-    if (!orders[id]) return;
-
-    orders[id].status = newStatus;
-    orders[id].lastUpdated = new Date().toISOString();
-    localStorage.setItem(this.storageKey, JSON.stringify(orders));
-
-    window.dispatchEvent(new CustomEvent('orderStatusChanged', { detail: orders[id] }));
-
-    const modal = document.getElementById('orderTrackerModal');
-    if (modal && modal.classList.contains('active')) {
-      this.renderMyOrdersPage();
+    let activeTableNum = null;
+    if (typeof tableQRScanner !== 'undefined' && tableQRScanner.tableNumber) {
+      activeTableNum = parseInt(tableQRScanner.tableNumber, 10);
     }
-  }
 
-  setupStorageSyncListener() {
-    window.addEventListener('storage', (e) => {
-      if (e.key === this.storageKey) {
-        this.renderMyOrdersPage();
-      }
-    });
+    let tableOrders = [];
+    if (activeTableNum && typeof supabaseService !== 'undefined') {
+      tableOrders = await supabaseService.fetchOrdersByTable(activeTableNum);
+    }
 
-    window.addEventListener('orderStatusChanged', (e) => {
-      const order = e.detail;
-      const info = this.statusMap[order.status] || { toast: `Status: ${order.status}`, icon: '🔔' };
-      if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
-        cartSystem.showToastNotification(`Order #${order.id}: ${info.label}`);
-      }
-    });
+    let numOrders = [];
+    if (orderNumbers.length > 0 && typeof supabaseService !== 'undefined') {
+      numOrders = await supabaseService.fetchCustomerOrders(orderNumbers);
+    }
+
+    const ordersMap = {};
+    numOrders.forEach(o => { if (o && o.id) ordersMap[o.id] = o; });
+    tableOrders.forEach(o => { if (o && o.id) ordersMap[o.id] = o; });
+
+    return Object.values(ordersMap).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   }
 
   openMyOrdersModal() {
@@ -226,29 +189,18 @@ class OrderTracker {
     }
   }
 
-  getCustomerOrdersList() {
-    const ordersMap = this.getAllOrdersMap();
-    let ordersList = Object.values(ordersMap);
-
-    // Filter by table if Dine-In URL table parameter exists
-    let activeTableNum = null;
-    if (typeof tableQRScanner !== 'undefined' && tableQRScanner.tableNumber) {
-      activeTableNum = parseInt(tableQRScanner.tableNumber, 10);
-    }
-
-    if (activeTableNum) {
-      const tableOrders = ordersList.filter(o => parseInt(o.table, 10) === activeTableNum);
-      if (tableOrders.length > 0) return tableOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    }
-
-    return ordersList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  }
-
-  renderMyOrdersPage() {
+  async renderMyOrdersPage() {
     const container = document.getElementById('orderTrackerContent');
     if (!container) return;
 
-    const allCustomerOrders = this.getCustomerOrdersList();
+    container.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px;">
+        <span style="font-size: 2rem;">⚡</span>
+        <p style="color: var(--text-secondary); margin-top: 10px;">Loading active orders from Supabase database...</p>
+      </div>
+    `;
+
+    const allCustomerOrders = await this.getCustomerOrdersList();
 
     if (allCustomerOrders.length === 0) {
       container.innerHTML = `
@@ -266,7 +218,6 @@ class OrderTracker {
       return;
     }
 
-    // Separate Active vs Completed Orders
     const activeOrders = allCustomerOrders.filter(o => o.status !== 'completed' && o.status !== 'cancelled' && o.status !== 'unavailable');
     const completedOrders = allCustomerOrders.filter(o => o.status === 'completed' || o.status === 'cancelled' || o.status === 'unavailable');
 
@@ -297,7 +248,7 @@ class OrderTracker {
             <span style="font-size: 1.8rem;">📦</span>
             <div>
               <h2 style="font-size: 1.4rem; color: var(--fk-yellow); font-weight: 900; margin: 0;">My Orders</h2>
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Real-Time Order Tracking Center</span>
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">Real-Time Order Tracking Center (Supabase DB)</span>
             </div>
           </div>
           <span class="badge-taco-yellow" style="font-size: 0.85rem; padding: 6px 14px;">
@@ -330,10 +281,8 @@ class OrderTracker {
     const isDelivery = (order.type === 'Home Delivery' || order.type === 'home_delivery');
     const currentStatusInfo = this.statusMap[order.status] || this.statusMap['pending'];
     
-    // Sanitize guest count safely (Fix undefined bug)
     const guestDisplay = order.guests ? `${order.guests} Guests` : (isDelivery ? '' : '2 Guests');
 
-    // Build grouped items list
     let itemsHtml = '';
     (order.items || []).forEach(item => {
       const isVegDot = item.isVeg === false ? '🔴' : '🟢';
@@ -351,7 +300,6 @@ class OrderTracker {
       `;
     });
 
-    // Timeline stepper active state calculation
     const step = currentStatusInfo.step;
     const isStep1Active = step >= 1 ? 'active' : '';
     const isStep2Active = step >= 2 ? 'active' : '';
@@ -360,11 +308,10 @@ class OrderTracker {
     const isStep5Active = step >= 5 ? 'active' : '';
 
     const formattedTime = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
-    const statusDisplayLabel = (order.status === 'transit_ready') ? (isDelivery ? '🚚 Out for Delivery' : '🍽️ Serving') : currentStatusInfo.label;
+    const statusDisplayLabel = (order.status === 'transit_ready' || order.status === 'delivering') ? (isDelivery ? '🚚 Out for Delivery' : '🍽️ Serving') : currentStatusInfo.label;
 
     return `
       <div class="order-tracker-card ${isActive ? 'active-card' : 'history-card'}">
-        <!-- Card Top Header -->
         <div class="card-header-row">
           <div class="card-id-col">
             <span class="card-order-num">ORDER #${order.id}</span>
@@ -375,7 +322,6 @@ class OrderTracker {
           </span>
         </div>
 
-        <!-- Status Banner -->
         <div class="card-status-banner ${order.status}">
           <span class="banner-icon">${currentStatusInfo.icon}</span>
           <div>
@@ -393,7 +339,6 @@ class OrderTracker {
             </div>
           </div>
 
-          <!-- Independent Stepper Timeline for this Order -->
           <div class="tracker-stepper">
             <div class="step-item ${isStep1Active}">
               <div class="step-dot">1</div>
@@ -426,7 +371,6 @@ class OrderTracker {
           </div>
         ` : ''}
 
-        <!-- Order Summary & Details -->
         <div class="card-summary-box">
           <div class="summary-details-row">
             ${isDelivery ? `
