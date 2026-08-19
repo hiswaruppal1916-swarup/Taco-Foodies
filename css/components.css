@@ -1793,6 +1793,309 @@
   z-index: 10;
 }
 
+/* ==========================================================================
+   RESTAURANT OWNER DASHBOARD STYLES (/owner-dashboard)
+   ========================================================================== */
+.dash-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.kpi-card .kpi-icon {
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+}
+
+.kpi-card .kpi-val {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.kpi-card .kpi-title {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.kpi-card.highlight {
+  border-color: var(--fk-yellow);
+  background: rgba(255, 229, 0, 0.08);
+}
+
+.kpi-card.highlight .kpi-val { color: var(--fk-yellow); }
+
+.kpi-card.yellow { border-color: #ffe500; }
+.kpi-card.blue { border-color: var(--fk-blue); }
+.kpi-card.orange { border-color: var(--taco-orange); }
+.kpi-card.green { border-color: #4caf50; }
+.kpi-card.red { border-color: #f44336; }
+
+/* Filters Row */
+.dash-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+}
+
+.dash-filters-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.owner-filter-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.owner-filter-btn.active {
+  background: var(--fk-blue);
+  color: #ffffff;
+  border-color: var(--fk-blue);
+}
+
+.owner-filter-btn.yellow.active { background: #ffe500; color: #000; border-color: #ffe500; }
+.owner-filter-btn.blue.active { background: var(--fk-blue); color: #fff; border-color: var(--fk-blue); }
+.owner-filter-btn.orange.active { background: var(--taco-orange); color: #fff; border-color: var(--taco-orange); }
+.owner-filter-btn.green.active { background: #4caf50; color: #fff; border-color: #4caf50; }
+.owner-filter-btn.red.active { background: #f44336; color: #fff; border-color: #f44336; }
+
+/* Color-Coded Live Orders Feed Grid */
+.owner-orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.owner-order-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-left: 5px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
+}
+
+/* Status Color Coding */
+.owner-order-card.status-yellow { border-left-color: #ffe500; background: linear-gradient(135deg, rgba(255, 229, 0, 0.08) 0%, var(--bg-card) 100%); }
+.owner-order-card.status-blue { border-left-color: #2874f0; background: linear-gradient(135deg, rgba(40, 116, 240, 0.08) 0%, var(--bg-card) 100%); }
+.owner-order-card.status-orange { border-left-color: #ff5722; background: linear-gradient(135deg, rgba(255, 87, 34, 0.08) 0%, var(--bg-card) 100%); }
+.owner-order-card.status-green { border-left-color: #4caf50; background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, var(--bg-card) 100%); }
+.owner-order-card.status-red { border-left-color: #f44336; background: linear-gradient(135deg, rgba(244, 67, 54, 0.08) 0%, var(--bg-card) 100%); }
+
+.card-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.id-time-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-order-id {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #ffffff;
+}
+
+.card-order-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.order-status-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.order-status-badge.status-yellow { background: #ffe500; color: #000; }
+.order-status-badge.status-blue { background: #2874f0; color: #fff; }
+.order-status-badge.status-orange { background: #ff5722; color: #fff; }
+.order-status-badge.status-green { background: #4caf50; color: #fff; }
+.order-status-badge.status-red { background: #f44336; color: #fff; }
+
+.card-type-banner {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-primary);
+}
+
+.card-address-box {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.card-items-box {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.card-calc-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 6px;
+}
+
+.card-total-val {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--fk-yellow);
+}
+
+/* One-Click Status Controls */
+.one-click-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.status-btn {
+  flex: 1;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-btn.accept { background: rgba(40, 116, 240, 0.2); border: 1px solid var(--fk-blue); color: #ffffff; }
+.status-btn.accept:hover { background: var(--fk-blue); }
+
+.status-btn.prep { background: rgba(0, 180, 216, 0.2); border: 1px solid var(--taco-teal); color: #ffffff; }
+.status-btn.prep:hover { background: var(--taco-teal); color: #000; }
+
+.status-btn.ready { background: rgba(255, 87, 34, 0.2); border: 1px solid var(--taco-orange); color: #ffffff; }
+.status-btn.ready:hover { background: var(--taco-orange); }
+
+.status-btn.complete { background: rgba(76, 175, 80, 0.2); border: 1px solid #4caf50; color: #ffffff; }
+.status-btn.complete:hover { background: #4caf50; }
+
+.status-btn.cancel { background: rgba(244, 67, 54, 0.2); border: 1px solid #f44336; color: #ffffff; }
+.status-btn.cancel:hover { background: #f44336; }
+
+/* Analytics Section */
+.analytics-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.analytics-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.analytics-card h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--fk-yellow);
+  margin-bottom: 12px;
+}
+
+.analytics-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .summary-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .owner-orders-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-section-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --- 15. TOAST NOTIFICATION BANNER --- */
 .toast-container {
   position: fixed;

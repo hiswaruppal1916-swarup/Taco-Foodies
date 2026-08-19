@@ -294,7 +294,7 @@ class CheckoutSystem {
     `;
   }
 
-  submitDineInOrder() {
+  async submitDineInOrder() {
     const tableInput = document.getElementById('dineInTableInput');
     const tableNum = tableInput ? parseInt(tableInput.value, 10) : 1;
     const guests = this.selectedGuests || 2;
@@ -311,8 +311,17 @@ class CheckoutSystem {
       paymentMethod: 'Cash on Delivery / Pay at Table'
     };
 
-    // Initialize tracking order automatically in background
-    const order = orderTracker.createOrder(orderData);
+    // Create order in Supabase database & local tracker automatically
+    let order = null;
+    if (typeof supabaseService !== 'undefined') {
+      order = await supabaseService.createOrder(orderData);
+    }
+    
+    if (!order && typeof orderTracker !== 'undefined') {
+      order = orderTracker.createOrder(orderData);
+    } else if (order && typeof orderTracker !== 'undefined') {
+      orderTracker.registerOrder(order);
+    }
 
     // Clear cart if ordered from cart
     if (!this.currentDish) {
@@ -320,10 +329,10 @@ class CheckoutSystem {
     }
 
     // Display Order Confirmation Screen directly (No WhatsApp window popup)
-    this.showOrderConfirmationScreen(order);
+    this.showOrderConfirmationScreen(order || { id: 'TF-1000' });
   }
 
-  submitDeliveryOrder() {
+  async submitDeliveryOrder() {
     const name = document.getElementById('delNameInput')?.value.trim();
     const phone = document.getElementById('delPhoneInput')?.value.trim();
     const house = document.getElementById('delHouseInput')?.value.trim();
@@ -355,15 +364,24 @@ class CheckoutSystem {
       paymentMethod: 'Cash on Delivery'
     };
 
-    // Initialize tracking order automatically in background
-    const order = orderTracker.createOrder(orderData);
+    // Create order in Supabase database & local tracker automatically
+    let order = null;
+    if (typeof supabaseService !== 'undefined') {
+      order = await supabaseService.createOrder(orderData);
+    }
+    
+    if (!order && typeof orderTracker !== 'undefined') {
+      order = orderTracker.createOrder(orderData);
+    } else if (order && typeof orderTracker !== 'undefined') {
+      orderTracker.registerOrder(order);
+    }
 
     if (!this.currentDish) {
       cartSystem.clearCart();
     }
 
     // Display Order Confirmation Screen directly (No WhatsApp window popup)
-    this.showOrderConfirmationScreen(order);
+    this.showOrderConfirmationScreen(order || { id: 'TF-1000' });
   }
 
   setupEventListeners() {

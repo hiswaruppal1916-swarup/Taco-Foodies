@@ -58,12 +58,37 @@ class OrderTracker {
     this.setupEventListeners();
   }
 
+  registerOrder(newOrder) {
+    if (!newOrder || !newOrder.id) return newOrder;
+
+    const orders = this.getAllOrders();
+    orders[newOrder.id] = newOrder;
+    localStorage.setItem(this.storageKey, JSON.stringify(orders));
+    localStorage.setItem('taco_foodies_current_order_id', newOrder.id);
+    this.activeOrderId = newOrder.id;
+
+    // Subscribe to Supabase Realtime changes for this order
+    if (typeof supabaseService !== 'undefined') {
+      supabaseService.subscribeToOrderUpdates(newOrder.id, (updatedDbRecord) => {
+        if (updatedDbRecord && updatedDbRecord.status) {
+          this.updateOrderStatus(newOrder.id, updatedDbRecord.status);
+        }
+      });
+    }
+
+    if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
+      cartSystem.showToastNotification(`🎉 Order #${newOrder.id} submitted successfully!`);
+    }
+
+    return newOrder;
+  }
+
   createOrder(orderData) {
     const id = 'TF-' + Math.floor(1000 + Math.random() * 9000);
     const newOrder = {
       id: id,
       timestamp: new Date().toISOString(),
-      status: 'received',
+      status: 'pending',
       type: orderData.type,
       customerName: orderData.customerName || 'Dine-In Customer',
       phone: orderData.phone || '',
@@ -78,18 +103,7 @@ class OrderTracker {
       prepTime: '15–20 minutes'
     };
 
-    const orders = this.getAllOrders();
-    orders[id] = newOrder;
-    localStorage.setItem(this.storageKey, JSON.stringify(orders));
-    localStorage.setItem('taco_foodies_current_order_id', id);
-    this.activeOrderId = id;
-
-    // Show instant toast notification
-    if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
-      cartSystem.showToastNotification(`🎉 Order #${id} submitted successfully!`);
-    }
-
-    return newOrder;
+    return this.registerOrder(newOrder);
   }
 
   getAllOrders() {

@@ -6,7 +6,8 @@
   <title>TACO Foodies – Award-Winning Mexican & Chinese Restaurant</title>
   <meta name="description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum. 5.0 Rated, Open 24 Hours.">
   
-  <!-- CSS Stylesheets -->
+  <!-- Supabase JS Client & CSS Stylesheets -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/animations.css">
@@ -40,6 +41,11 @@
             <a href="tel:08400310013" class="header-call-btn" title="Call TACO Foodies">📞 Call Now</a>
             <a href="https://wa.me/918400310013" target="_blank" class="header-wa-btn" title="Chat on WhatsApp">💬 WhatsApp</a>
           </div>
+
+          <!-- Owner Dashboard Login Icon Button -->
+          <button id="openOwnerLoginModalBtn" class="owner-sync-icon-btn" title="Owner Dashboard Login (/owner-dashboard)">
+            🔑
+          </button>
 
           <!-- Owner Google Sheet Sync Settings Icon Button -->
           <button id="openOwnerSyncModalBtn" class="owner-sync-icon-btn" title="Owner Google Sheet Settings">
@@ -479,13 +485,90 @@
     </div>
   </div>
 
+  <!-- ==========================================
+       19. RESTAURANT OWNER LOGIN MODAL (/owner-login)
+       ========================================== -->
+  <div id="ownerLoginModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 440px;">
+      <button id="closeOwnerLoginBtn" class="close-modal-btn">✕</button>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <span style="font-size: 3rem;">🔐</span>
+        <h3 style="font-size: 1.4rem; color: var(--fk-yellow); margin-top: 8px;">Restaurant Owner Portal</h3>
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">Authorized Email Authentication (/owner-login)</p>
+      </div>
+
+      <form id="ownerLoginForm">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label">Owner Gmail Address *</label>
+          <input type="email" id="ownerEmailInput" class="form-input" value="restaurantowner@gmail.com" placeholder="restaurantowner@gmail.com" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label">Password / Access Key</label>
+          <input type="password" id="ownerPasswordInput" class="form-input" placeholder="••••••••">
+        </div>
+
+        <button type="submit" class="primary-btn full-width" style="padding: 12px; font-size: 1rem; justify-content: center;">
+          🔑 Access Owner Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       20. RESTAURANT OWNER DASHBOARD (/owner-dashboard)
+       ========================================== -->
+  <div id="ownerDashboardModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 1080px; width: 95%;">
+      <button id="closeOwnerDashBtn" class="close-modal-btn">✕</button>
+      
+      <!-- Dashboard Top Header Bar -->
+      <div class="dash-top-bar">
+        <div>
+          <h2 style="font-size: 1.5rem; color: var(--fk-yellow); font-weight: 900;">👑 TACO Foodies - Owner Dashboard</h2>
+          <span style="font-size: 0.8rem; color: var(--taco-teal);">Live Supabase Database & Realtime Status Center</span>
+        </div>
+        <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="ownerDashboard.handleOwnerLogout()">
+          🔒 Sign Out
+        </button>
+      </div>
+
+      <!-- 1. Summary Cards Grid -->
+      <div id="ownerSummaryCardsContainer" class="summary-cards-grid"></div>
+
+      <!-- 2. Filters Row -->
+      <div class="dash-filters-row">
+        <span style="font-weight: 800; font-size: 0.9rem; color: var(--text-primary);">Filter Orders:</span>
+        <div class="dash-filters-group">
+          <button class="owner-filter-btn active" data-filter="all" onclick="ownerDashboard.setFilter('all')">All</button>
+          <button class="owner-filter-btn" data-filter="today" onclick="ownerDashboard.setFilter('today')">Today's</button>
+          <button class="owner-filter-btn yellow" data-filter="pending" onclick="ownerDashboard.setFilter('pending')">Pending</button>
+          <button class="owner-filter-btn blue" data-filter="preparing" onclick="ownerDashboard.setFilter('preparing')">Preparing</button>
+          <button class="owner-filter-btn orange" data-filter="ready" onclick="ownerDashboard.setFilter('ready')">Ready</button>
+          <button class="owner-filter-btn green" data-filter="completed" onclick="ownerDashboard.setFilter('completed')">Completed</button>
+          <button class="owner-filter-btn red" data-filter="cancelled" onclick="ownerDashboard.setFilter('cancelled')">Cancelled</button>
+          <button class="owner-filter-btn" data-filter="delivery" onclick="ownerDashboard.setFilter('delivery')">🏠 Home Delivery</button>
+          <button class="owner-filter-btn" data-filter="dine_in" onclick="ownerDashboard.setFilter('dine_in')">📍 Dine-In</button>
+        </div>
+      </div>
+
+      <!-- 3. Color-Coded Orders Grid -->
+      <div id="ownerOrdersFeedGrid" class="owner-orders-grid"></div>
+
+      <!-- 4. Analytics Summary Dashboard -->
+      <div id="ownerAnalyticsContainer" class="analytics-section-grid" style="margin-top: 24px;"></div>
+    </div>
+  </div>
+
   <!-- JavaScript Modules -->
   <script src="js/menuData.js"></script>
   <script src="js/tableQR.js"></script>
   <script src="js/googleSheetsSync.js"></script>
+  <script src="js/supabaseClient.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/checkout.js"></script>
   <script src="js/orderTracker.js"></script>
+  <script src="js/ownerDashboard.js"></script>
   <script src="js/UIController.js"></script>
   <script src="js/app.js"></script>
 </body>
