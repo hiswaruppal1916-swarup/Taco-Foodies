@@ -139,15 +139,16 @@ class OwnerDashboardManager {
     }, 4000);
   }
 
-  checkHashRoute() {
+  async checkHashRoute() {
     const hash = window.location.hash || '';
 
     if (hash === '#owner-login') {
       this.showLoginModal();
     } else if (hash === '#owner-dashboard') {
-      if (!supabaseService.isOwnerLoggedIn()) {
-        alert('Unauthorized access! Only the authorized restaurant owner can view the dashboard.');
-        window.location.hash = '#digitalMenuSection';
+      const isAuth = await supabaseService.isOwnerLoggedIn();
+      if (!isAuth) {
+        window.location.hash = '#owner-login';
+        this.showLoginModal('Unauthorized access! Please sign in with authorized owner credentials.');
         return;
       }
       this.openDashboardModal();
@@ -159,14 +160,40 @@ class OwnerDashboardManager {
     return modal && modal.classList.contains('active');
   }
 
-  showLoginModal() {
+  showLoginModal(errorMessage = '') {
     const modal = document.getElementById('ownerLoginModal');
-    if (modal) modal.classList.add('active');
+    if (!modal) return;
+
+    const emailInput = document.getElementById('ownerEmailInput');
+    const passwordInput = document.getElementById('ownerPasswordInput');
+    const errorBanner = document.getElementById('ownerLoginError');
+
+    // Ensure inputs are completely empty on display
+    if (emailInput) emailInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+
+    if (errorBanner) {
+      if (errorMessage) {
+        errorBanner.textContent = errorMessage;
+        errorBanner.style.display = 'block';
+      } else {
+        errorBanner.style.display = 'none';
+        errorBanner.textContent = '';
+      }
+    }
+
+    modal.classList.add('active');
   }
 
   closeLoginModal() {
     const modal = document.getElementById('ownerLoginModal');
     if (modal) modal.classList.remove('active');
+    
+    const errorBanner = document.getElementById('ownerLoginError');
+    if (errorBanner) {
+      errorBanner.style.display = 'none';
+      errorBanner.textContent = '';
+    }
   }
 
   openDashboardModal() {
@@ -189,31 +216,57 @@ class OwnerDashboardManager {
 
     const emailInput = document.getElementById('ownerEmailInput');
     const passwordInput = document.getElementById('ownerPasswordInput');
+    const submitBtn = document.getElementById('ownerLoginSubmitBtn');
+    const errorBanner = document.getElementById('ownerLoginError');
 
-    const email = emailInput ? emailInput.value.trim() : '';
+    const email = emailInput ? emailInput.value : '';
     const password = passwordInput ? passwordInput.value : '';
 
-    if (!email) {
-      alert('Please enter the owner email address!');
+    if (errorBanner) {
+      errorBanner.style.display = 'none';
+      errorBanner.textContent = '';
+    }
+
+    if (!email || !password) {
+      if (errorBanner) {
+        errorBanner.textContent = 'Please enter both email and password.';
+        errorBanner.style.display = 'block';
+      }
       return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Authenticating...';
     }
 
     const result = await supabaseService.ownerLogin(email, password);
 
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '🔑 Access Owner Dashboard';
+    }
+
     if (result.success) {
+      if (emailInput) emailInput.value = '';
+      if (passwordInput) passwordInput.value = '';
       this.closeLoginModal();
       window.location.hash = '#owner-dashboard';
       this.openDashboardModal();
     } else {
-      alert(result.message);
+      if (errorBanner) {
+        errorBanner.textContent = result.message || 'Invalid credentials or unauthorized account.';
+        errorBanner.style.display = 'block';
+      }
     }
   }
 
-  handleOwnerLogout() {
-    supabaseService.ownerLogout();
+  async handleOwnerLogout() {
+    await supabaseService.ownerLogout();
+    this.cachedOrders = [];
     this.closeDashboardModal();
-    alert('Logged out from Owner Dashboard.');
-    window.location.hash = '#digitalMenuSection';
+    window.location.hash = '#owner-login';
+    this.showLoginModal();
   }
 
   setFilter(statusFilter) {
@@ -675,8 +728,9 @@ class OwnerDashboardManager {
   setupEventListeners() {
     const loginBtn = document.getElementById('openOwnerLoginModalBtn');
     if (loginBtn) {
-      loginBtn.addEventListener('click', () => {
-        if (supabaseService.isOwnerLoggedIn()) {
+      loginBtn.addEventListener('click', async () => {
+        const isAuth = await supabaseService.isOwnerLoggedIn();
+        if (isAuth) {
           window.location.hash = '#owner-dashboard';
           this.openDashboardModal();
         } else {
@@ -704,6 +758,32 @@ class OwnerDashboardManager {
     const loginForm = document.getElementById('ownerLoginForm');
     if (loginForm) {
       loginForm.addEventListener('submit', (e) => this.handleOwnerLogin(e));
+    }
+
+    const emailInput = document.getElementById('ownerEmailInput');
+    if (emailInput) {
+      emailInput.addEventListener('input', () => {
+        emailInput.value = emailInput.value.replace(/\s+/g, '');
+      });
+      emailInput.addEventListener('blur', () => {
+        emailInput.value = emailInput.value.replace(/\s+/g, '');
+      });
+    }
+
+    const togglePasswordBtn = document.getElementById('toggleOwnerPasswordBtn');
+    if (togglePasswordBtn) {
+      togglePasswordBtn.addEventListener('click', () => {
+        const passwordInput = document.getElementById('ownerPasswordInput');
+        if (passwordInput) {
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            togglePasswordBtn.textContent = '🙈';
+          } else {
+            passwordInput.type = 'password';
+            togglePasswordBtn.textContent = '👁️';
+          }
+        }
+      });
     }
   }
 }

@@ -18,7 +18,7 @@ class SupabaseClientService {
   constructor() {
     this.supabaseUrl = 'https://mqbngtgwejzammhdwczl.supabase.co';
     this.supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xYm5ndGd3ZWp6YW1taGR3Y3psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxMTkyMDUsImV4cCI6MjEwMjY5NTIwNX0.BA1xfJGa1ZZ9mxFTZyAJj7dJEACJUxZQyxvA5v92_EM';
-    this.authorizedOwnerEmail = 'restaurantowner@gmail.com';
+    this.authorizedOwnerEmail = 'tacofoodiesowner@gmail.com';
     this.client = null;
     this.ordersChannel = null;
     this.realtimeListeners = new Set();
@@ -462,64 +462,101 @@ class SupabaseClientService {
     });
   }
 
-  // --- 5. OWNER AUTHENTICATION ---
+  // --- 5. OWNER AUTHENTICATION (PURE SUPABASE AUTH) ---
   async ownerLogin(email, password) {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    
-    if (cleanEmail !== this.authorizedOwnerEmail && cleanEmail !== 'owner@tacofoodies.com') {
+    const cleanEmail = (email || '').trim().toLowerCase().replace(/\s+/g, '');
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      return { success: false, message: 'Please enter both email and password.' };
+    }
+
+    if (cleanEmail !== this.authorizedOwnerEmail) {
       return { 
         success: false, 
-        message: `Unauthorized! Only the authorized owner (${this.authorizedOwnerEmail}) can access the dashboard.` 
+        message: 'Unauthorized account! Access denied. Only authorized owner credentials can log in.' 
       };
     }
 
     const client = this.getClient();
-    if (client && password) {
-      try {
-        const { data, error } = await client.auth.signInWithPassword({
-          email: cleanEmail,
-          password: password
-        });
-
-        if (!error && data && data.session) {
-          localStorage.setItem('taco_owner_session', JSON.stringify({
-            email: cleanEmail,
-            authenticatedAt: new Date().toISOString(),
-            token: data.session.access_token
-          }));
-          return { success: true, message: 'Successfully signed in to Owner Dashboard!' };
-        }
-      } catch (e) {
-        console.warn('Supabase auth attempt notice:', e);
-      }
+    if (!client) {
+      return { success: false, message: 'Supabase database client unavailable.' };
     }
 
-    localStorage.setItem('taco_owner_session', JSON.stringify({
-      email: cleanEmail,
-      authenticatedAt: new Date().toISOString()
-    }));
+    try {
+      let { data, error } = await client.auth.signInWithPassword({
+        email: cleanEmail,
+        password: cleanPassword
+      });
 
-    return { success: true, message: 'Welcome to TACO Foodies Owner Dashboard!' };
+      // If initial auth fails, attempt with lowercase password (e.g. SP1916 -> sp1916)
+      if (error && cleanPassword !== cleanPassword.toLowerCase()) {
+        const retry = await client.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword.toLowerCase()
+        });
+        if (!retry.error && retry.data) {
+          data = retry.data;
+          error = null;
+        }
+      }
+
+      if (error) {
+        console.error('Supabase Auth error:', error.message);
+        return { 
+          success: false, 
+          message: error.message === 'Invalid login credentials' ? 'Invalid email or password.' : error.message 
+        };
+      }
+
+      if (data && data.user) {
+        const userEmail = (data.user.email || '').trim().toLowerCase().replace(/\s+/g, '');
+        if (userEmail !== this.authorizedOwnerEmail) {
+          await client.auth.signOut();
+          return { success: false, message: 'Unauthorized account! Access denied.' };
+        }
+
+        // Clean up legacy fallback storage keys
+        localStorage.removeItem('taco_owner_session');
+        return { success: true, user: data.user, session: data.session, message: 'Successfully signed in!' };
+      }
+
+      return { success: false, message: 'Authentication failed. Please check credentials.' };
+    } catch (e) {
+      console.error('Supabase auth exception:', e);
+      return { success: false, message: e.message || 'Authentication error occurred.' };
+    }
   }
 
-  isOwnerLoggedIn() {
+  async isOwnerLoggedIn() {
+    const client = this.getClient();
+    if (!client) return false;
+
     try {
-      const session = localStorage.getItem('taco_owner_session');
-      if (!session) return false;
-      const parsed = JSON.parse(session);
-      return (parsed && (parsed.email === this.authorizedOwnerEmail || parsed.email === 'owner@tacofoodies.com'));
+      const { data: { session }, error } = await client.auth.getSession();
+      if (error || !session || !session.user) return false;
+
+      const userEmail = (session.user.email || '').trim().toLowerCase().replace(/\s+/g, '');
+      if (userEmail === this.authorizedOwnerEmail) {
+        return true;
+      } else {
+        await client.auth.signOut();
+        return false;
+      }
     } catch (e) {
       return false;
     }
   }
 
-  ownerLogout() {
+  async ownerLogout() {
     localStorage.removeItem('taco_owner_session');
     const client = this.getClient();
     if (client) {
       try {
-        client.auth.signOut();
-      } catch (e) {}
+        await client.auth.signOut();
+      } catch (e) {
+        console.warn('Sign out exception:', e);
+      }
     }
   }
 }
