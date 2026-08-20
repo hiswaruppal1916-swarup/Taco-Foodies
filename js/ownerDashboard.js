@@ -2,6 +2,86 @@
  * TACO Foodies - Restaurant Owner Dashboard & Auth Engine
  * Multi-Device Realtime Sync across all owner devices and customer devices.
  */
+
+/**
+ * Global Date & Time Formatting Utilities for TACO Foodies
+ * Timezone: Asia/Kolkata (Indian Standard Time - IST)
+ * 12-Hour Clock with AM/PM
+ */
+function formatISTDateTime(isoTimestamp) {
+  if (!isoTimestamp) {
+    return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+  }
+
+  const d = new Date(isoTimestamp);
+  if (isNaN(d.getTime())) {
+    return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+  }
+
+  try {
+    const timeFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    const ymdFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+
+    const timeStr = timeFormatter.format(d); // e.g. "7:13 AM" or "7:45 PM"
+    const dateStr = dateFormatter.format(d); // e.g. "20 Aug 2026"
+    const ymd = ymdFormatter.format(d);     // e.g. "2026-08-20"
+
+    return {
+      dateStr,
+      timeStr,
+      fullStr: `${dateStr} • ${timeStr}`,
+      ymd
+    };
+  } catch (e) {
+    console.warn('IST Date format error:', e);
+    return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+  }
+}
+
+function getTodayISTYMD() {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+  } catch (e) {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
+function getTodayISTDisplayDate() {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }).format(new Date()).toUpperCase();
+  } catch (e) {
+    return 'TODAY';
+  }
+}
+
 class OwnerDashboardManager {
   constructor() {
     this.activeFilter = 'all';
@@ -99,7 +179,8 @@ class OwnerDashboardManager {
 
   closeDashboardModal() {
     const modal = document.getElementById('ownerDashboardModal');
-    if (modal) modal.classList.remove('active');
+    if (!modal) return;
+    modal.classList.remove('active');
     window.location.hash = '';
   }
 
@@ -186,18 +267,23 @@ class OwnerDashboardManager {
 
   renderSummaryCards() {
     const orders = this.cachedOrders || [];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayISTYMD = getTodayISTYMD();
 
-    const todayOrders = orders.filter(o => o.timestamp && o.timestamp.startsWith(todayStr));
+    const todayOrders = orders.filter(o => {
+      if (!o.timestamp) return false;
+      const dt = formatISTDateTime(o.timestamp);
+      return dt.ymd === todayISTYMD;
+    });
     const todayRevenue = todayOrders.reduce((sum, o) => sum + (parseFloat(o.grandTotal) || 0), 0);
 
-    const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'received').length;
+    const verificationPendingCount = orders.filter(o => o.payment_status === 'verification_pending' || o.status === 'payment_verification_pending').length;
+    const pendingCount = orders.filter(o => o.status === 'pending' || o.status === 'received' || o.status === 'payment_pending').length;
     const acceptedCount = orders.filter(o => o.status === 'accepted' || o.status === 'confirmed').length;
     const preparingCount = orders.filter(o => o.status === 'preparing').length;
     const readyCount = orders.filter(o => o.status === 'ready' || o.status === 'transit_ready').length;
     const servingCount = orders.filter(o => o.status === 'serving' || o.status === 'delivering').length;
     const completedCount = orders.filter(o => o.status === 'completed').length;
-    const cancelledCount = orders.filter(o => o.status === 'cancelled' || o.status === 'unavailable').length;
+    const cancelledCount = orders.filter(o => o.status === 'cancelled' || o.status === 'unavailable' || o.payment_status === 'payment_not_verified').length;
 
     const deliveryCount = orders.filter(o => o.type === 'Home Delivery' || o.type === 'home_delivery').length;
     const dineInCount = orders.filter(o => o.type === 'Dine-In' || o.type === 'dine_in').length;
@@ -216,6 +302,12 @@ class OwnerDashboardManager {
         <span class="kpi-icon">💰</span>
         <div class="kpi-val">₹${todayRevenue}</div>
         <div class="kpi-title">Today's Revenue</div>
+      </div>
+
+      <div class="kpi-card yellow highlight" onclick="ownerDashboard.setFilter('verification_pending')" style="cursor: pointer;">
+        <span class="kpi-icon">💳</span>
+        <div class="kpi-val">${verificationPendingCount}</div>
+        <div class="kpi-title">Advance Verifications</div>
       </div>
 
       <div class="kpi-card yellow">
@@ -261,14 +353,20 @@ class OwnerDashboardManager {
     if (!container) return;
 
     let filtered = [...(this.cachedOrders || [])];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayISTYMD = getTodayISTYMD();
 
     // Status Filter
     if (this.activeFilter && this.activeFilter !== 'all') {
       if (this.activeFilter === 'today') {
-        filtered = filtered.filter(o => o.timestamp && o.timestamp.startsWith(todayStr));
+        filtered = filtered.filter(o => {
+          if (!o.timestamp) return false;
+          const dt = formatISTDateTime(o.timestamp);
+          return dt.ymd === todayISTYMD;
+        });
+      } else if (this.activeFilter === 'verification_pending') {
+        filtered = filtered.filter(o => o.payment_status === 'verification_pending' || o.status === 'payment_verification_pending' || o.status === 'payment_pending');
       } else if (this.activeFilter === 'pending') {
-        filtered = filtered.filter(o => o.status === 'pending' || o.status === 'received');
+        filtered = filtered.filter(o => o.status === 'pending' || o.status === 'received' || o.status === 'payment_pending');
       } else if (this.activeFilter === 'accepted') {
         filtered = filtered.filter(o => o.status === 'accepted' || o.status === 'confirmed');
       } else if (this.activeFilter === 'preparing') {
@@ -278,7 +376,7 @@ class OwnerDashboardManager {
       } else if (this.activeFilter === 'completed') {
         filtered = filtered.filter(o => o.status === 'completed');
       } else if (this.activeFilter === 'cancelled') {
-        filtered = filtered.filter(o => o.status === 'cancelled' || o.status === 'unavailable');
+        filtered = filtered.filter(o => o.status === 'cancelled' || o.status === 'unavailable' || o.payment_status === 'payment_not_verified');
       } else if (this.activeFilter === 'delivery') {
         filtered = filtered.filter(o => o.type === 'Home Delivery' || o.type === 'home_delivery');
       } else if (this.activeFilter === 'dine_in') {
@@ -286,8 +384,23 @@ class OwnerDashboardManager {
       }
     }
 
+    // Always sort newest order first based on creation timestamp
+    filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    let html = '';
+
+    // If Today's filter is active, display section header banner showing current date
+    if (this.activeFilter === 'today') {
+      html += `
+        <div class="today-date-header">
+          <span class="today-tag">TODAY</span>
+          <span class="today-date-val">📅 ${getTodayISTDisplayDate()}</span>
+        </div>
+      `;
+    }
+
     if (filtered.length === 0) {
-      container.innerHTML = `
+      container.innerHTML = html + `
         <div class="no-orders-box">
           <span class="no-orders-icon">📋</span>
           <h4>No orders matching filter</h4>
@@ -297,14 +410,17 @@ class OwnerDashboardManager {
       return;
     }
 
-    let html = '';
     filtered.forEach(order => {
       const isDelivery = (order.type === 'Home Delivery' || order.type === 'home_delivery');
+      const isVerificationPending = (order.payment_status === 'verification_pending' || order.status === 'payment_verification_pending');
       
       let statusColorClass = 'status-yellow';
       let statusBadgeLabel = '🟡 Pending';
 
-      if (order.status === 'accepted' || order.status === 'confirmed') {
+      if (isVerificationPending) {
+        statusColorClass = 'status-yellow';
+        statusBadgeLabel = '💳 Verification Pending';
+      } else if (order.status === 'accepted' || order.status === 'confirmed') {
         statusColorClass = 'status-blue';
         statusBadgeLabel = '✅ Accepted';
       } else if (order.status === 'preparing') {
@@ -319,7 +435,7 @@ class OwnerDashboardManager {
       } else if (order.status === 'completed') {
         statusColorClass = 'status-green';
         statusBadgeLabel = '🎉 Completed';
-      } else if (order.status === 'cancelled' || order.status === 'unavailable') {
+      } else if (order.status === 'cancelled' || order.status === 'unavailable' || order.payment_status === 'payment_not_verified') {
         statusColorClass = 'status-red';
         statusBadgeLabel = '❌ Cancelled';
       }
@@ -329,18 +445,25 @@ class OwnerDashboardManager {
         itemsHtml += `<div class="card-item-row"><span>${i.name} (x${i.quantity})</span><strong>₹${i.price * i.quantity}</strong></div>`;
       });
 
-      const formattedTime = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+      const dt = formatISTDateTime(order.timestamp);
 
       const guestVal = (order.guests !== null && order.guests !== undefined && !isNaN(order.guests))
         ? order.guests
         : (order.guest_count || 1);
+
+      const advanceAmt = order.advanceAmount || Math.round((order.grandTotal || 0) * 0.3);
+      const remainingAmt = order.remainingAmount || ((order.grandTotal || 0) - advanceAmt);
 
       html += `
         <div class="owner-order-card ${statusColorClass}">
           <div class="card-top-header">
             <div class="id-time-col">
               <span class="card-order-id">#${order.id}</span>
-              <span class="card-order-time">🕒 ${formattedTime}</span>
+              <div class="card-order-datetime">
+                <span class="card-order-date">📅 ${dt.dateStr || 'Today'}</span>
+                <span class="card-datetime-sep">•</span>
+                <span class="card-order-time">🕐 ${dt.timeStr || 'Just now'}</span>
+              </div>
             </div>
             <span class="order-status-badge ${statusColorClass}">${statusBadgeLabel}</span>
           </div>
@@ -357,6 +480,30 @@ class OwnerDashboardManager {
 
           ${isDelivery && order.address ? `
             <div class="card-address-box">📍 <strong>Address:</strong> ${order.address}</div>
+          ` : ''}
+
+          <!-- Advance Payment Verification Card Banner -->
+          ${isDelivery ? `
+            <div class="advance-verification-card-box" style="background: ${isVerificationPending ? 'rgba(255, 229, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isVerificationPending ? 'rgba(255, 229, 0, 0.4)' : 'var(--border-glass)'}; border-radius: var(--radius-sm); padding: 10px; margin: 4px 0;">
+              <div style="font-size: 0.82rem; font-weight: 800; color: ${isVerificationPending ? 'var(--fk-yellow)' : 'var(--taco-teal)'}; display: flex; justify-content: space-between;">
+                <span>💳 Payment Status: <strong>${order.payment_status || 'pending'}</strong></span>
+                <span>30% Advance: <strong>₹${advanceAmt}</strong></span>
+              </div>
+              <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
+                Remaining COD on Delivery: <strong style="color: #ffffff;">₹${remainingAmt}</strong>
+              </div>
+
+              ${isVerificationPending ? `
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <button type="button" class="status-btn accept" style="flex: 1; padding: 8px; font-weight: 800; background: #2e7d32; color: #fff;" onclick="ownerDashboard.confirmAdvancePayment('${order.id}')" title="Confirm 30% Advance Paid">
+                    ✓ Advance Payment Received
+                  </button>
+                  <button type="button" class="status-btn cancel" style="flex: 1; padding: 8px; font-weight: 800; background: #c62828; color: #fff;" onclick="ownerDashboard.rejectAdvancePayment('${order.id}')" title="Reject Payment">
+                    ✕ Payment Not Received
+                  </button>
+                </div>
+              ` : ''}
+            </div>
           ` : ''}
 
           <div class="card-items-box">
@@ -381,6 +528,57 @@ class OwnerDashboardManager {
     });
 
     container.innerHTML = html;
+  }
+
+  async confirmAdvancePayment(orderId) {
+    if (!orderId) return;
+
+    if (typeof supabaseService !== 'undefined' && !supabaseService.isOwnerLoggedIn()) {
+      alert('Unauthorized! Only the restaurant owner can verify advance payments.');
+      return;
+    }
+
+    const success = await supabaseService.updateOrderPaymentStatus(orderId, 'advance_paid', 'confirmed');
+    if (success) {
+      const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId || o.db_id === orderId);
+      if (target) {
+        target.payment_status = 'advance_paid';
+        target.status = 'confirmed';
+      }
+      this.renderSummaryCards();
+      this.renderOrdersFeed();
+      this.renderAnalytics();
+      alert(`✅ Advance Payment Verified! Order #${orderId} has been confirmed.`);
+    } else {
+      alert(`Database update failed for Order #${orderId}. Payment status was not updated.`);
+    }
+  }
+
+  async rejectAdvancePayment(orderId) {
+    if (!orderId) return;
+
+    if (typeof supabaseService !== 'undefined' && !supabaseService.isOwnerLoggedIn()) {
+      alert('Unauthorized! Only the restaurant owner can manage payment verifications.');
+      return;
+    }
+
+    if (!confirm(`Are you sure payment was NOT received for Order #${orderId}? This will mark the order as unverified.`)) {
+      return;
+    }
+
+    const success = await supabaseService.updateOrderPaymentStatus(orderId, 'payment_not_verified', 'cancelled');
+    if (success) {
+      const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId || o.db_id === orderId);
+      if (target) {
+        target.payment_status = 'payment_not_verified';
+        target.status = 'cancelled';
+      }
+      this.renderSummaryCards();
+      this.renderOrdersFeed();
+      this.renderAnalytics();
+    } else {
+      alert(`Database update failed for Order #${orderId}.`);
+    }
   }
 
   // UPDATE ONLY THE SELECTED ORDER IN SUPABASE DATABASE

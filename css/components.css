@@ -1972,15 +1972,44 @@
 .owner-order-card.status-green { border-left-color: #4caf50; background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, var(--bg-card) 100%); }
 .owner-order-card.status-red { border-left-color: #f44336; background: linear-gradient(135deg, rgba(244, 67, 54, 0.08) 0%, var(--bg-card) 100%); }
 
+.today-date-header {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(255, 229, 0, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 229, 0, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.today-date-header .today-tag {
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: var(--fk-yellow);
+  letter-spacing: 1px;
+}
+
+.today-date-header .today-date-val {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
 .card-top-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .id-time-col {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .card-order-id {
@@ -1990,8 +2019,30 @@
   color: #ffffff;
 }
 
+.card-order-datetime {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 2px;
+}
+
+.card-order-date {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--fk-yellow);
+  white-space: nowrap;
+}
+
 .card-order-time {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--taco-teal);
+  white-space: nowrap;
+}
+
+.card-datetime-sep {
+  font-size: 0.75rem;
   color: var(--text-secondary);
 }
 
@@ -2782,4 +2833,24 @@
     font-size: 0.72rem;
     justify-content: center;
   }
+}
+
+/* Advance Payment Flow Styles */
+.primary-btn.disabled, button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  filter: grayscale(80%);
+}
+
+.advance-payment-box {
+  animation: fadeIn 0.3s ease;
+}
+
+.policy-notice-card {
+  transition: border-color 0.2s ease;
+}
+
+.policy-checkbox-wrapper label:hover {
+  color: #ffffff;
 }

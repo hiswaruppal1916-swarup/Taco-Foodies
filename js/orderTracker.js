@@ -1,8 +1,19 @@
-/**
- * TACO Foodies - Multi-Order Tracking System ("My Orders" / #my-orders)
- * Real-Time Supabase Synchronization:
- * Automatically refreshes customer tracking status in real time when owner updates order in database.
- */
+if (typeof formatISTDateTime === 'undefined') {
+  window.formatISTDateTime = function(isoTimestamp) {
+    if (!isoTimestamp) return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+    const d = new Date(isoTimestamp);
+    if (isNaN(d.getTime())) return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+    try {
+      const timeStr = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+      const dateStr = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+      const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+      return { dateStr, timeStr, fullStr: `${dateStr} • ${timeStr}`, ymd };
+    } catch (e) {
+      return { dateStr: '', timeStr: '', fullStr: '', ymd: '' };
+    }
+  };
+}
+
 class OrderTracker {
   constructor() {
     this.idListKey = 'taco_customer_order_numbers';
@@ -330,15 +341,45 @@ class OrderTracker {
     const isStep5Active = step >= 5 ? 'active' : '';
     const isStep6Active = step >= 6 ? 'active' : '';
 
-    const formattedTime = order.timestamp ? new Date(order.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
-    const statusDisplayLabel = currentStatusInfo.label;
+    const dt = (typeof formatISTDateTime === 'function') ? formatISTDateTime(order.timestamp) : { fullStr: '', dateStr: '', timeStr: '' };
+    const datetimeDisplay = dt.dateStr ? `📅 ${dt.dateStr} • 🕐 ${dt.timeStr}` : 'Just now';
+    
+    const isPaymentPending = isDelivery && (order.payment_status === 'pending' || order.status === 'payment_pending');
+    const isVerificationPending = isDelivery && (order.payment_status === 'verification_pending' || order.status === 'payment_verification_pending');
+    const isAdvancePaid = isDelivery && (order.payment_status === 'advance_paid' || order.status === 'confirmed' || order.status === 'accepted');
+    const isPaymentNotVerified = isDelivery && (order.payment_status === 'payment_not_verified');
+
+    let statusDisplayLabel = currentStatusInfo.label;
+    let statusDisplayIcon = currentStatusInfo.icon;
+    let statusDisplayDesc = currentStatusInfo.desc;
+
+    if (isPaymentPending) {
+      statusDisplayLabel = '💳 30% Advance Payment Required';
+      statusDisplayIcon = '💳';
+      statusDisplayDesc = 'Please make the 30% advance payment to confirm your Home Delivery order.';
+    } else if (isVerificationPending) {
+      statusDisplayLabel = '⏳ Payment Verification Pending';
+      statusDisplayIcon = '⏳';
+      statusDisplayDesc = 'Your payment information has been submitted. The restaurant owner will verify your 30% advance payment shortly.';
+    } else if (isAdvancePaid) {
+      statusDisplayLabel = '✓ Advance Payment Successful';
+      statusDisplayIcon = '✅';
+      statusDisplayDesc = 'Your 30% advance payment has been verified by the restaurant & Order is Confirmed!';
+    } else if (isPaymentNotVerified) {
+      statusDisplayLabel = '❌ Advance Payment Not Verified';
+      statusDisplayIcon = '❌';
+      statusDisplayDesc = 'Your advance payment could not be verified. Please contact the restaurant before placing the order again.';
+    }
+
+    const advanceAmt = order.advanceAmount || Math.round((order.grandTotal || 0) * 0.3);
+    const remainingAmt = order.remainingAmount || ((order.grandTotal || 0) - advanceAmt);
 
     return `
       <div class="order-tracker-card ${isActive ? 'active-card' : 'history-card'}">
         <div class="card-header-row">
           <div class="card-id-col">
             <span class="card-order-num">ORDER #${order.id}</span>
-            <span class="card-order-time">🕒 ${formattedTime}</span>
+            <span class="card-order-time">${datetimeDisplay}</span>
           </div>
           <span class="order-type-chip ${isDelivery ? 'delivery' : 'dine-in'}">
             ${isDelivery ? '🏠 Home Delivery' : `📍 Dine-In (Table ${order.table || 1})`}
@@ -346,12 +387,33 @@ class OrderTracker {
         </div>
 
         <div class="card-status-banner ${order.status}">
-          <span class="banner-icon">${currentStatusInfo.icon}</span>
+          <span class="banner-icon">${statusDisplayIcon}</span>
           <div>
             <div class="banner-label">${statusDisplayLabel}</div>
-            <div class="banner-desc">${currentStatusInfo.desc}</div>
+            <div class="banner-desc">${statusDisplayDesc}</div>
           </div>
         </div>
+
+        <!-- Home Delivery Advance Payment Status Card Banner -->
+        ${isDelivery ? `
+          <div class="tracker-advance-info-box" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed ${isAdvancePaid ? '#4caf50' : 'var(--fk-yellow)'}; border-radius: var(--radius-sm); padding: 10px; margin: 4px 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 800; color: var(--fk-yellow);">
+              <span>30% Advance: <strong>₹${advanceAmt}</strong></span>
+              <span style="color: ${isAdvancePaid ? '#4caf50' : 'var(--fk-yellow)'};">
+                ${isAdvancePaid ? '✓ Advance Paid' : isVerificationPending ? '⏳ Verification Pending' : isPaymentNotVerified ? '❌ Not Verified' : '💳 Payment Due'}
+              </span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--taco-teal); margin-top: 4px; font-weight: 700;">
+              Remaining Amount on Delivery (COD): <strong style="color: #ffffff;">₹${remainingAmt}</strong>
+            </div>
+
+            ${isPaymentPending ? `
+              <button type="button" class="primary-btn full-width" style="margin-top: 8px; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="orderTracker.closeTrackerModal(); checkoutSystem.showAdvancePaymentPage(${JSON.stringify(order).replace(/"/g, '&quot;')}); checkoutSystem.openCheckoutModal();">
+                💳 Pay 30% Advance Now
+              </button>
+            ` : ''}
+          </div>
+        ` : ''}
 
         ${isActive ? `
           <div class="prep-timer-box">

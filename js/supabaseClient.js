@@ -2,6 +2,18 @@
  * TACO Foodies - Supabase Centralized Database & Realtime Client
  * 100% Centralized Supabase Database & Realtime Sync Engine for Multi-Device Operations.
  */
+
+// Centralized Restaurant Payment Settings (Easily configurable by owner/developer)
+window.restaurantPaymentSettings = {
+  advance_percentage: 30, // 30% advance requirement by default
+  payment_phone_number: '+91 90000 00000', // DEMO PAYMENT NUMBER
+  payment_upi_id: 'tacofoodies@upi', // DEMO UPI ID
+  payment_qr_image: '', // High-res SVG/Canvas QR placeholder
+  policy_text_advance: 'To confirm a Home Delivery order, a 30% advance payment is required.',
+  policy_text_cancellation: 'Once the 30% advance payment has been paid, the advance amount is non-refundable if the customer cancels the order.',
+  policy_text_remaining: 'After the advance payment is verified, the remaining amount must be paid according to the restaurant\'s delivery payment policy.'
+};
+
 class SupabaseClientService {
   constructor() {
     this.supabaseUrl = 'https://mqbngtgwejzammhdwczl.supabase.co';
@@ -92,12 +104,31 @@ class SupabaseClientService {
       ? parseInt(dbo.guest_count, 10)
       : (dbo.table_number ? 2 : 1);
 
+    const grandTotal = parseFloat(dbo.total || 0);
+    const advancePct = (window.restaurantPaymentSettings && window.restaurantPaymentSettings.advance_percentage) || 30;
+    const defaultAdvance = isDelivery ? Math.round(grandTotal * (advancePct / 100)) : 0;
+
+    const advanceAmount = (dbo.advance_amount !== undefined && dbo.advance_amount !== null && !isNaN(dbo.advance_amount))
+      ? parseFloat(dbo.advance_amount)
+      : defaultAdvance;
+
+    const remainingAmount = (dbo.remaining_amount !== undefined && dbo.remaining_amount !== null && !isNaN(dbo.remaining_amount))
+      ? parseFloat(dbo.remaining_amount)
+      : (grandTotal - advanceAmount);
+
+    const paymentStatus = dbo.payment_status || (isDelivery ? 'pending' : 'paid');
+
     return {
       id: dbo.order_number || dbo.id,
       order_number: dbo.order_number || dbo.id,
       db_id: dbo.id,
       timestamp: dbo.created_at || new Date().toISOString(),
       status: normStatus,
+      payment_status: paymentStatus,
+      advanceAmount: advanceAmount,
+      remainingAmount: remainingAmount,
+      paymentSubmittedAt: dbo.payment_submitted_at || null,
+      paymentVerifiedAt: dbo.payment_verified_at || null,
       type: isDelivery ? 'Home Delivery' : 'Dine-In',
       customerName: dbo.customer_name || (dbo.table_number ? `Dine-In (Table ${dbo.table_number})` : 'Customer'),
       phone: dbo.customer_phone || '',
@@ -112,8 +143,8 @@ class SupabaseClientService {
       })),
       foodTotal: parseFloat(dbo.subtotal || dbo.total || 0),
       deliveryFee: parseFloat(dbo.delivery_fee || 0),
-      grandTotal: parseFloat(dbo.total || 0),
-      paymentMethod: dbo.payment_method || 'Cash on Delivery'
+      grandTotal: grandTotal,
+      paymentMethod: dbo.payment_method || (isDelivery ? '30% Advance + COD' : 'Cash on Delivery')
     };
   }
 
@@ -127,6 +158,19 @@ class SupabaseClientService {
       ? parseInt(orderPayload.guests, 10)
       : (orderPayload.table ? 2 : 1);
 
+    const grandTotal = parseFloat(orderPayload.grandTotal || 0);
+    const advancePct = (window.restaurantPaymentSettings && window.restaurantPaymentSettings.advance_percentage) || 30;
+    const advanceAmount = orderPayload.advanceAmount !== undefined 
+      ? parseFloat(orderPayload.advanceAmount) 
+      : (orderType === 'home_delivery' ? Math.round(grandTotal * (advancePct / 100)) : 0);
+
+    const remainingAmount = orderPayload.remainingAmount !== undefined
+      ? parseFloat(orderPayload.remainingAmount)
+      : (grandTotal - advanceAmount);
+
+    const initialStatus = orderPayload.status || (orderType === 'home_delivery' ? 'payment_pending' : 'pending');
+    const initialPaymentStatus = orderPayload.paymentStatus || (orderType === 'home_delivery' ? 'pending' : 'paid');
+
     const orderData = {
       order_number: orderNumber,
       order_type: orderType,
@@ -137,9 +181,12 @@ class SupabaseClientService {
       guest_count: parsedGuests,
       subtotal: parseFloat(orderPayload.foodTotal || orderPayload.grandTotal || 0),
       delivery_fee: parseFloat(orderPayload.deliveryFee || 0),
-      total: parseFloat(orderPayload.grandTotal || 0),
-      status: 'pending',
-      payment_method: orderPayload.paymentMethod || 'Cash on Delivery'
+      total: grandTotal,
+      status: initialStatus,
+      payment_status: initialPaymentStatus,
+      advance_amount: advanceAmount,
+      remaining_amount: remainingAmount,
+      payment_method: orderPayload.paymentMethod || (orderType === 'home_delivery' ? '30% Advance + COD' : 'Cash on Delivery')
     };
 
     if (!client) {
@@ -333,6 +380,55 @@ class SupabaseClientService {
       return true;
     } catch (e) {
       console.error('Exception updating order status:', e);
+      return false;
+    }
+  }
+
+  // --- 4b. UPDATE PAYMENT STATUS & ORDER STATUS FOR SPECIFIC ORDER ---
+  async updateOrderPaymentStatus(orderId, paymentStatus, orderStatus) {
+    const client = this.getClient();
+    if (!client || !orderId) return false;
+
+    try {
+      const cleanId = String(orderId).trim();
+      const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
+
+      const updateData = { 
+        payment_status: paymentStatus,
+        status: orderStatus,
+        updated_at: new Date().toISOString()
+      };
+
+      if (paymentStatus === 'verification_pending') {
+        updateData.payment_submitted_at = new Date().toISOString();
+      } else if (paymentStatus === 'advance_paid') {
+        updateData.payment_verified_at = new Date().toISOString();
+      }
+
+      let query = client.from('orders').update(updateData);
+
+      if (isUuid) {
+        query = query.or(`id.eq.${cleanId},order_number.eq.${cleanId}`);
+      } else {
+        query = query.eq('order_number', cleanId);
+      }
+
+      const { data, error } = await query.select();
+
+      if (error) {
+        console.error('Error updating payment status in Supabase:', error.message);
+        return false;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn(`No order record found in database matching identifier #${cleanId}`);
+        return false;
+      }
+
+      console.log(`✅ Order #${cleanId} payment status updated to '${paymentStatus}', order status to '${orderStatus}'`);
+      return true;
+    } catch (e) {
+      console.error('Exception updating order payment status:', e);
       return false;
     }
   }
