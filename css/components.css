@@ -2854,3 +2854,119 @@
 .policy-checkbox-wrapper label:hover {
   color: #ffffff;
 }
+
+/* Owner Dashboard Mobile Responsiveness Improvements */
+.owner-order-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+.card-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.card-type-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  word-break: break-word;
+  width: 100%;
+}
+
+.card-address-box {
+  word-break: break-word;
+  width: 100%;
+}
+
+.advance-verification-card-box {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.advance-verification-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  width: 100%;
+}
+
+.verification-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.verification-actions-row .status-btn {
+  flex: 1 1 130px;
+  min-width: 120px;
+  white-space: normal;
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 576px) {
+  .owner-orders-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .owner-order-card {
+    padding: 12px;
+  }
+
+  .card-order-id {
+    font-size: 1rem;
+  }
+
+  .order-status-badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .dash-filters-row {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .dash-filters-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .owner-filter-btn {
+    font-size: 0.74rem;
+    padding: 6px 10px;
+  }
+
+  .verification-actions-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .verification-actions-row .status-btn {
+    width: 100%;
+    flex: none;
+  }
+}

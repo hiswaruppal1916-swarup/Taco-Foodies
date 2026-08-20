@@ -484,21 +484,21 @@ class OwnerDashboardManager {
 
           <!-- Advance Payment Verification Card Banner -->
           ${isDelivery ? `
-            <div class="advance-verification-card-box" style="background: ${isVerificationPending ? 'rgba(255, 229, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isVerificationPending ? 'rgba(255, 229, 0, 0.4)' : 'var(--border-glass)'}; border-radius: var(--radius-sm); padding: 10px; margin: 4px 0;">
-              <div style="font-size: 0.82rem; font-weight: 800; color: ${isVerificationPending ? 'var(--fk-yellow)' : 'var(--taco-teal)'}; display: flex; justify-content: space-between;">
-                <span>💳 Payment Status: <strong>${order.payment_status || 'pending'}</strong></span>
-                <span>30% Advance: <strong>₹${advanceAmt}</strong></span>
+            <div class="advance-verification-card-box" style="background: ${isVerificationPending ? 'rgba(255, 229, 0, 0.12)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isVerificationPending ? 'rgba(255, 229, 0, 0.4)' : 'var(--border-glass)'}; border-radius: var(--radius-sm); padding: 10px; margin: 6px 0;">
+              <div class="advance-verification-header-row" style="font-size: 0.82rem; font-weight: 800; color: ${isVerificationPending ? 'var(--fk-yellow)' : 'var(--taco-teal)'}; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 10px;">
+                <span>💳 Payment Status: <strong style="color: #ffffff;">${this.formatPaymentStatusLabel(order.payment_status)}</strong></span>
+                <span>30% Advance: <strong style="color: var(--fk-yellow);">₹${advanceAmt}</strong></span>
               </div>
               <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px;">
                 Remaining COD on Delivery: <strong style="color: #ffffff;">₹${remainingAmt}</strong>
               </div>
 
               ${isVerificationPending ? `
-                <div style="display: flex; gap: 8px; margin-top: 10px;">
-                  <button type="button" class="status-btn accept" style="flex: 1; padding: 8px; font-weight: 800; background: #2e7d32; color: #fff;" onclick="ownerDashboard.confirmAdvancePayment('${order.id}')" title="Confirm 30% Advance Paid">
+                <div class="verification-actions-row" style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+                  <button type="button" class="status-btn accept" style="flex: 1 1 130px; padding: 10px 8px; font-weight: 800; background: #2e7d32; color: #fff; border: 1px solid #4caf50;" onclick="ownerDashboard.confirmAdvancePayment('${order.id}')" title="Confirm 30% Advance Paid">
                     ✓ Advance Payment Received
                   </button>
-                  <button type="button" class="status-btn cancel" style="flex: 1; padding: 8px; font-weight: 800; background: #c62828; color: #fff;" onclick="ownerDashboard.rejectAdvancePayment('${order.id}')" title="Reject Payment">
+                  <button type="button" class="status-btn cancel" style="flex: 1 1 130px; padding: 10px 8px; font-weight: 800; background: #c62828; color: #fff; border: 1px solid #f44336;" onclick="ownerDashboard.rejectAdvancePayment('${order.id}')" title="Reject Payment">
                     ✕ Payment Not Received
                   </button>
                 </div>
@@ -528,6 +528,15 @@ class OwnerDashboardManager {
     });
 
     container.innerHTML = html;
+  }
+
+  formatPaymentStatusLabel(status) {
+    if (!status) return 'Pending ⏳';
+    if (status === 'verification_pending') return 'Verification Pending ⏳';
+    if (status === 'advance_paid') return 'Advance Paid ✓';
+    if (status === 'payment_not_verified') return 'Not Verified ✕';
+    if (status === 'paid') return 'Paid ✓';
+    return status;
   }
 
   async confirmAdvancePayment(orderId) {
