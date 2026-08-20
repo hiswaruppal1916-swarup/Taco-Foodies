@@ -115,13 +115,18 @@ class GoogleSheetsSync {
   }
 
   getActiveMenuData() {
-    const customData = localStorage.getItem(this.customMenuKey);
-    if (customData) {
-      try {
-        return JSON.parse(customData);
-      } catch (e) {
-        console.error('Error reading cached custom menu', e);
+    if (this.currentSheetUrl) {
+      const customData = localStorage.getItem(this.customMenuKey);
+      if (customData) {
+        try {
+          return JSON.parse(customData);
+        } catch (e) {
+          console.error('Error reading cached custom menu', e);
+        }
       }
+    } else {
+      // Automatically clear stale cache when no live Google Sheet is connected
+      localStorage.removeItem(this.customMenuKey);
     }
     return DEFAULT_MENU_DATA;
   }
