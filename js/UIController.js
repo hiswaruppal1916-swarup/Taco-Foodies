@@ -121,7 +121,7 @@ class UIController {
 
   // --- 2. CATEGORY PILLS ---
   renderCategoryPills() {
-    const categories = ['All', 'Trending', 'Mexican', 'Chinese', 'Combos', 'Deals', 'Beverages'];
+    const categories = ['All', 'Starters', 'Soups & Salads', 'Rice & Biryani', 'Gravy & Main Course', 'Combos & Rotis', 'Drinks & Beverages', 'Trending', 'Deals'];
     const container = document.getElementById('categoryPillsNav');
     if (!container) return;
 
@@ -129,12 +129,14 @@ class UIController {
     categories.forEach(cat => {
       const activeClass = (cat.toLowerCase() === (this.activeCategory || 'all').toLowerCase()) ? 'active' : '';
       let icon = '🍽️';
+      if (cat === 'Starters') icon = '🌮';
+      if (cat === 'Soups & Salads') icon = '🍲';
+      if (cat === 'Rice & Biryani') icon = '🍚';
+      if (cat === 'Gravy & Main Course') icon = '🥘';
+      if (cat === 'Combos & Rotis') icon = '👑';
+      if (cat === 'Drinks & Beverages') icon = '🥤';
       if (cat === 'Trending') icon = '🔥';
-      if (cat === 'Mexican') icon = '🌮';
-      if (cat === 'Chinese') icon = '🍜';
-      if (cat === 'Combos') icon = '👑';
       if (cat === 'Deals') icon = '🎁';
-      if (cat === 'Beverages') icon = '🥤';
 
       html += `
         <button class="category-pill ${activeClass}" onclick="uiController.setActiveCategory('${cat}', true)">
@@ -164,10 +166,10 @@ class UIController {
   renderHorizontalCarousels() {
     const collections = [
       { id: 'carouselTrending', title: '🔥 Trending Now', items: this.menuData.filter(i => i.isTrending) },
-      { id: 'carouselMexican', title: '🌮 Mexican Favorites', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'mexican') },
-      { id: 'carouselChinese', title: '🍜 Chinese Specials', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'chinese') },
-      { id: 'carouselDeals', title: '🎁 Today\'s Deals (Up to 30% OFF)', items: this.menuData.filter(i => i.isTodayDeal) },
-      { id: 'carouselBeverages', title: '🥤 Drinks & Coolers', items: this.menuData.filter(i => i.category && i.category.toLowerCase() === 'beverages') }
+      { id: 'carouselMexican', title: '🌮 Starters & Tacos', items: this.menuData.filter(i => i.category && i.category.toLowerCase().includes('starter')) },
+      { id: 'carouselChinese', title: '🍚 Rice & Biryani Specials', items: this.menuData.filter(i => i.category && i.category.toLowerCase().includes('rice')) },
+      { id: 'carouselDeals', title: '🎁 Today\'s Deals (Up to 25% OFF)', items: this.menuData.filter(i => i.isTodayDeal) },
+      { id: 'carouselBeverages', title: '🥤 Drinks & Coolers', items: this.menuData.filter(i => i.category && (i.category.toLowerCase().includes('drink') || i.category.toLowerCase().includes('beverage'))) }
     ];
 
     collections.forEach(col => {
@@ -273,8 +275,18 @@ class UIController {
         filtered = filtered.filter(i => i.isTrending || (i.category && i.category.toLowerCase() === 'trending'));
       } else if (catLower === 'deals' || catLower === 'today\'s deals') {
         filtered = filtered.filter(i => i.isTodayDeal || (i.category && i.category.toLowerCase() === 'deals'));
-      } else if (catLower.includes('combo')) {
-        filtered = filtered.filter(i => i.category && i.category.toLowerCase().includes('combo'));
+      } else if (catLower.includes('starter')) {
+        filtered = filtered.filter(i => i.category && i.category.toLowerCase().includes('starter'));
+      } else if (catLower.includes('soup') || catLower.includes('salad')) {
+        filtered = filtered.filter(i => i.category && (i.category.toLowerCase().includes('soup') || i.category.toLowerCase().includes('salad')));
+      } else if (catLower.includes('rice') || catLower.includes('biryani')) {
+        filtered = filtered.filter(i => i.category && (i.category.toLowerCase().includes('rice') || i.category.toLowerCase().includes('biryani')));
+      } else if (catLower.includes('gravy') || catLower.includes('main')) {
+        filtered = filtered.filter(i => i.category && (i.category.toLowerCase().includes('gravy') || i.category.toLowerCase().includes('main')));
+      } else if (catLower.includes('combo') || catLower.includes('roti')) {
+        filtered = filtered.filter(i => i.category && (i.category.toLowerCase().includes('combo') || i.category.toLowerCase().includes('roti')));
+      } else if (catLower.includes('drink') || catLower.includes('beverage')) {
+        filtered = filtered.filter(i => i.category && (i.category.toLowerCase().includes('drink') || i.category.toLowerCase().includes('beverage')));
       } else {
         filtered = filtered.filter(i => i.category && i.category.toLowerCase() === catLower);
       }
