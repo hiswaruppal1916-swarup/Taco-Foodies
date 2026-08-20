@@ -94,6 +94,41 @@ class OrderTracker {
     };
   }
 
+  openPaymentForOrder(orderId) {
+    if (!orderId) return;
+
+    let targetOrder = (this.orders || []).find(o => String(o.id) === String(orderId) || String(o.order_number) === String(orderId) || String(o.db_id) === String(orderId));
+
+    if (!targetOrder && typeof supabaseService !== 'undefined') {
+      supabaseService.fetchCustomerOrders([orderId]).then(results => {
+        if (results && results.length > 0) {
+          this.openPaymentForOrderObj(results[0]);
+        } else {
+          alert(`Order #${orderId} not found.`);
+        }
+      });
+      return;
+    }
+
+    if (targetOrder) {
+      this.openPaymentForOrderObj(targetOrder);
+    }
+  }
+
+  openPaymentForOrderObj(order) {
+    this.closeTrackerModal();
+
+    if (typeof checkoutSystem !== 'undefined') {
+      checkoutSystem.currentMode = 'delivery';
+      
+      const modal = document.getElementById('checkoutModal');
+      if (modal) {
+        modal.classList.add('active');
+      }
+      checkoutSystem.showAdvancePaymentPage(order);
+    }
+  }
+
   init() {
     this.setupEventListeners();
     this.checkHashRoute();
@@ -345,9 +380,9 @@ class OrderTracker {
     const datetimeDisplay = dt.dateStr ? `📅 ${dt.dateStr} • 🕐 ${dt.timeStr}` : 'Just now';
     
     const isPaymentPending = isDelivery && (order.payment_status === 'pending' || order.status === 'payment_pending');
-    const isVerificationPending = isDelivery && (order.payment_status === 'verification_pending' || order.status === 'payment_verification_pending');
-    const isAdvancePaid = isDelivery && (order.payment_status === 'advance_paid' || order.status === 'confirmed' || order.status === 'accepted');
-    const isPaymentNotVerified = isDelivery && (order.payment_status === 'payment_not_verified');
+    const isVerificationPending = isDelivery && (order.payment_status === 'verification_pending' || order.payment_status === 'submitted' || order.status === 'payment_verification_pending');
+    const isAdvancePaid = isDelivery && (order.payment_status === 'advance_paid' || order.payment_status === 'received' || (order.status === 'confirmed' && order.payment_status !== 'not_received' && order.payment_status !== 'payment_not_verified'));
+    const isPaymentNotReceived = isDelivery && (order.payment_status === 'not_received' || order.payment_status === 'payment_not_verified');
 
     let statusDisplayLabel = currentStatusInfo.label;
     let statusDisplayIcon = currentStatusInfo.icon;
@@ -365,10 +400,10 @@ class OrderTracker {
       statusDisplayLabel = '✓ Advance Payment Successful';
       statusDisplayIcon = '✅';
       statusDisplayDesc = 'Your 30% advance payment has been verified by the restaurant & Order is Confirmed!';
-    } else if (isPaymentNotVerified) {
-      statusDisplayLabel = '❌ Advance Payment Not Verified';
+    } else if (isPaymentNotReceived) {
+      statusDisplayLabel = '❌ Advance Payment Not Received';
       statusDisplayIcon = '❌';
-      statusDisplayDesc = 'Your advance payment could not be verified. Please contact the restaurant before placing the order again.';
+      statusDisplayDesc = 'Your 30% advance payment has not been received/verified. Please complete the advance payment to continue your order.';
     }
 
     const advanceAmt = order.advanceAmount || Math.round((order.grandTotal || 0) * 0.3);
@@ -396,20 +431,20 @@ class OrderTracker {
 
         <!-- Home Delivery Advance Payment Status Card Banner -->
         ${isDelivery ? `
-          <div class="tracker-advance-info-box" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed ${isAdvancePaid ? '#4caf50' : 'var(--fk-yellow)'}; border-radius: var(--radius-sm); padding: 10px; margin: 4px 0;">
+          <div class="tracker-advance-info-box" style="background: rgba(255, 255, 255, 0.03); border: 1px dashed ${isAdvancePaid ? '#4caf50' : isPaymentNotReceived ? '#f44336' : 'var(--fk-yellow)'}; border-radius: var(--radius-sm); padding: 10px; margin: 4px 0;">
             <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 800; color: var(--fk-yellow);">
               <span>30% Advance: <strong>₹${advanceAmt}</strong></span>
-              <span style="color: ${isAdvancePaid ? '#4caf50' : 'var(--fk-yellow)'};">
-                ${isAdvancePaid ? '✓ Advance Paid' : isVerificationPending ? '⏳ Verification Pending' : isPaymentNotVerified ? '❌ Not Verified' : '💳 Payment Due'}
+              <span style="color: ${isAdvancePaid ? '#4caf50' : isPaymentNotReceived ? '#f44336' : 'var(--fk-yellow)'};">
+                ${isAdvancePaid ? '✓ Advance Paid' : isVerificationPending ? '⏳ Verification Pending' : isPaymentNotReceived ? '❌ Not Received' : '💳 Payment Due'}
               </span>
             </div>
             <div style="font-size: 0.8rem; color: var(--taco-teal); margin-top: 4px; font-weight: 700;">
               Remaining Amount on Delivery (COD): <strong style="color: #ffffff;">₹${remainingAmt}</strong>
             </div>
 
-            ${isPaymentPending ? `
-              <button type="button" class="primary-btn full-width" style="margin-top: 8px; justify-content: center; padding: 8px; font-size: 0.82rem;" onclick="orderTracker.closeTrackerModal(); checkoutSystem.showAdvancePaymentPage(${JSON.stringify(order).replace(/"/g, '&quot;')}); checkoutSystem.openCheckoutModal();">
-                💳 Pay 30% Advance Now
+            ${(isPaymentPending || isPaymentNotReceived) ? `
+              <button type="button" class="primary-btn full-width" style="margin-top: 8px; justify-content: center; padding: 10px; font-size: 0.85rem; font-weight: 800;" onclick="orderTracker.openPaymentForOrder('${order.id}')">
+                ${isPaymentNotReceived ? '💳 Complete 30% Advance Payment' : '💳 Pay 30% Advance Now'}
               </button>
             ` : ''}
           </div>

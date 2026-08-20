@@ -317,7 +317,7 @@ class SupabaseClientService {
 
       if (statusFilter && statusFilter !== 'all') {
         if (statusFilter === 'verification_pending') {
-          query = query.or('payment_status.eq.verification_pending,status.eq.payment_verification_pending,order_status.eq.payment_verification_pending');
+          query = query.or('payment_status.eq.verification_pending,payment_status.eq.submitted,status.eq.payment_verification_pending,order_status.eq.payment_verification_pending');
         } else if (statusFilter === 'pending') {
           query = query.in('status', ['pending', 'received', 'payment_pending']);
         } else if (statusFilter === 'accepted') {
@@ -404,16 +404,18 @@ class SupabaseClientService {
       const cleanId = String(orderId).trim();
       const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cleanId);
 
+      const targetOrderStatus = orderStatus || (paymentStatus === 'advance_paid' ? 'confirmed' : 'payment_pending');
+
       const updateData = { 
         payment_status: paymentStatus,
-        status: orderStatus,
-        order_status: orderStatus,
+        status: targetOrderStatus,
+        order_status: targetOrderStatus,
         updated_at: new Date().toISOString()
       };
 
-      if (paymentStatus === 'verification_pending') {
+      if (paymentStatus === 'verification_pending' || paymentStatus === 'submitted') {
         updateData.payment_submitted_at = new Date().toISOString();
-      } else if (paymentStatus === 'advance_paid') {
+      } else if (paymentStatus === 'advance_paid' || paymentStatus === 'received') {
         updateData.payment_verified_at = new Date().toISOString();
       }
 
@@ -437,7 +439,7 @@ class SupabaseClientService {
         return false;
       }
 
-      console.log(`✅ Order #${cleanId} payment status updated to '${paymentStatus}', order status to '${orderStatus}'`);
+      console.log(`✅ Order #${cleanId} payment status updated to '${paymentStatus}', order status to '${targetOrderStatus}'`);
       return true;
     } catch (e) {
       console.error('Exception updating order payment status:', e);

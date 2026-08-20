@@ -571,20 +571,22 @@ class OwnerDashboardManager {
       return;
     }
 
-    if (!confirm(`Are you sure payment was NOT received for Order #${orderId}? This will mark the order as unverified.`)) {
+    if (!confirm(`Are you sure payment was NOT received for Order #${orderId}? This will notify the customer that payment is pending.`)) {
       return;
     }
 
-    const success = await supabaseService.updateOrderPaymentStatus(orderId, 'payment_not_verified', 'cancelled');
+    const success = await supabaseService.updateOrderPaymentStatus(orderId, 'not_received', 'payment_pending');
     if (success) {
       const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId || o.db_id === orderId);
       if (target) {
-        target.payment_status = 'payment_not_verified';
-        target.status = 'cancelled';
+        target.payment_status = 'not_received';
+        target.status = 'payment_pending';
+        target.order_status = 'payment_pending';
       }
       this.renderSummaryCards();
       this.renderOrdersFeed();
       this.renderAnalytics();
+      alert(`Updated Order #${orderId}: Payment marked as 'Not Received'. Order remains pending for customer payment.`);
     } else {
       alert(`Database update failed for Order #${orderId}.`);
     }
