@@ -357,18 +357,15 @@ class CheckoutSystem {
   }
 
   downloadQRCode(orderId, advanceAmount) {
-    const dataUrl = this.generateDemoQRCodeSVG(orderId, advanceAmount);
     const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `TACO_Foodies_Advance_Payment_QR_${orderId}.svg`;
+    link.href = 'images/phonepe_real_qr.jpg';
+    link.download = `TACO_Foodies_PhonePe_QR_${orderId || 'Advance'}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
   openFullscreenQR(orderId, advanceAmount) {
-    const dataUrl = this.generateDemoQRCodeSVG(orderId, advanceAmount);
-    
     let modal = document.getElementById('fullscreenQRModal');
     if (!modal) {
       modal = document.createElement('div');
@@ -379,36 +376,16 @@ class CheckoutSystem {
     }
 
     modal.innerHTML = `
-      <div class="modal-box" style="max-width: 360px; text-align: center; padding: 20px;">
+      <div class="modal-box" style="max-width: 380px; text-align: center; padding: 20px;">
         <button type="button" class="close-modal-btn" onclick="document.getElementById('fullscreenQRModal').classList.remove('active')">✕</button>
-        <h3 style="font-size: 1.1rem; color: var(--fk-yellow); margin-bottom: 12px;">📱 Scan QR Code</h3>
-        <img src="${dataUrl}" alt="Demo Payment QR Code" style="width: 100%; max-width: 280px; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px;">Scan with PhonePe, Google Pay, Paytm or any UPI app to pay ₹${advanceAmount}.</p>
+        <h3 style="font-size: 1.15rem; color: var(--fk-yellow); margin-bottom: 12px;">📱 Scan PhonePe QR Code</h3>
+        <img src="images/phonepe_real_qr.jpg" alt="PhonePe QR Code" style="width: 100%; max-width: 300px; border-radius: 12px; margin-bottom: 14px; background: #ffffff; padding: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        <p style="font-size: 0.85rem; color: var(--text-primary); margin-bottom: 14px;">Scan with PhonePe, Google Pay, Paytm, or any UPI app to pay ₹${advanceAmount || 0}.</p>
         <button class="primary-btn full-width" style="justify-content: center;" onclick="checkoutSystem.downloadQRCode('${orderId}', ${advanceAmount})">⬇️ Download QR Code</button>
       </div>
     `;
 
     modal.classList.add('active');
-  }
-
-  copyPhoneNumber(phoneNum, btnElement) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(phoneNum).then(() => {
-        if (btnElement) {
-          const orig = btnElement.innerHTML;
-          btnElement.innerHTML = '✓ Copied!';
-          btnElement.style.background = '#4caf50';
-          btnElement.style.color = '#fff';
-          setTimeout(() => {
-            btnElement.innerHTML = orig;
-            btnElement.style.background = '';
-            btnElement.style.color = '';
-          }, 2000);
-        }
-      });
-    } else {
-      alert(`PhonePe Number: ${phoneNum}`);
-    }
   }
 
   togglePolicyAgreement(isChecked) {
@@ -427,15 +404,12 @@ class CheckoutSystem {
     const container = document.getElementById('checkoutModalContent');
     if (!container || !order) return;
 
-    const orderId = order.id || order.order_number || 'TF-4588';
+    const orderId = order.id || order.order_number || 'TF-4560';
     const total = order.grandTotal || 0;
     const advance = order.advanceAmount || Math.round(total * 0.3);
     const remaining = order.remainingAmount || (total - advance);
 
-    const qrDataUrl = this.generateDemoQRCodeSVG(orderId, advance);
     const settings = window.restaurantPaymentSettings || {};
-    const demoPhone = settings.payment_phone_number || '+91 90000 00000';
-    const demoUpi = settings.payment_upi_id || 'tacofoodies@upi';
     const advancePct = settings.advance_percentage || 30;
 
     container.innerHTML = `
@@ -480,34 +454,22 @@ class CheckoutSystem {
           </div>
         </div>
 
-        <!-- 3. Demo PhonePe / UPI QR Code Card -->
+        <!-- 3. Real PhonePe QR Code Card -->
         <div class="qr-payment-card" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; text-align: center;">
-          <div style="font-size: 0.85rem; font-weight: 800; color: var(--taco-teal); margin-bottom: 10px;">
+          <div style="font-size: 0.88rem; font-weight: 800; color: var(--taco-teal); margin-bottom: 12px;">
             📱 Scan QR Code to Pay Advance (₹${advance})
           </div>
 
-          <div style="position: relative; display: inline-block; margin-bottom: 12px;">
-            <img src="${qrDataUrl}" alt="Demo Payment QR Code" style="width: 220px; height: 250px; border-radius: 12px; border: 2px solid var(--border-glass); box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+          <div style="position: relative; display: inline-block; margin-bottom: 14px;">
+            <img src="images/phonepe_real_qr.jpg" alt="PhonePe Payment QR Code" style="width: 240px; height: 240px; border-radius: 12px; border: 2px solid var(--border-glass); box-shadow: 0 4px 18px rgba(0,0,0,0.4); object-fit: contain; background: #ffffff; padding: 6px;">
           </div>
 
-          <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 14px;">
-            <button type="button" class="secondary-btn" style="padding: 8px 14px; font-size: 0.8rem;" onclick="checkoutSystem.downloadQRCode('${orderId}', ${advance})">
+          <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 4px;">
+            <button type="button" class="secondary-btn" style="padding: 8px 14px; font-size: 0.82rem;" onclick="checkoutSystem.downloadQRCode('${orderId}', ${advance})">
               ⬇️ Download QR Code
             </button>
-            <button type="button" class="secondary-btn" style="padding: 8px 14px; font-size: 0.8rem;" onclick="checkoutSystem.openFullscreenQR('${orderId}', ${advance})">
+            <button type="button" class="secondary-btn" style="padding: 8px 14px; font-size: 0.82rem;" onclick="checkoutSystem.openFullscreenQR('${orderId}', ${advance})">
               🔍 View Fullscreen
-            </button>
-          </div>
-
-          <!-- PhonePe Number Box -->
-          <div class="phonepe-num-box" style="background: rgba(255,255,255,0.04); border: 1px stroke rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="text-align: left;">
-              <span style="display: block; font-size: 0.72rem; color: var(--text-secondary); font-weight: 700;">PhonePe / UPI Number (DEMO PAYMENT NUMBER):</span>
-              <strong style="font-size: 1rem; color: var(--fk-yellow); font-family: monospace;">${demoPhone}</strong>
-              <span style="display: block; font-size: 0.72rem; color: var(--taco-teal);">UPI ID: ${demoUpi}</span>
-            </div>
-            <button type="button" class="secondary-btn" style="padding: 6px 12px; font-size: 0.78rem;" onclick="checkoutSystem.copyPhoneNumber('${demoPhone}', this)">
-              📋 Copy Number
             </button>
           </div>
         </div>
@@ -535,10 +497,30 @@ class CheckoutSystem {
   async submitPaymentVerification(orderId) {
     if (!orderId) return;
 
+    // Duplicate Click Protection
+    const btn = document.getElementById('submitAdvancePaymentBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = 'Payment verification submitted ✓';
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'not-allowed';
+    }
+
     // Update order payment status in Supabase
     let success = false;
     if (typeof supabaseService !== 'undefined') {
       success = await supabaseService.updateOrderPaymentStatus(orderId, 'verification_pending', 'payment_verification_pending');
+    }
+
+    if (!success && typeof supabaseService !== 'undefined') {
+      alert('Unable to submit your payment verification. Please check your network connection and try again.');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'I Have Made the Advance Payment ➔';
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      }
+      return;
     }
 
     const container = document.getElementById('checkoutModalContent');
@@ -665,13 +647,18 @@ class CheckoutSystem {
       paymentMethod: '30% Advance + COD'
     };
 
-    // Create pending order in Supabase database & local tracker
+    // STEP 1 REQUIREMENT: Immediately create permanent order record in Supabase BEFORE payment page
     let order = null;
     if (typeof supabaseService !== 'undefined') {
       order = await supabaseService.createOrder(orderData);
     }
     
-    if (order && typeof orderTracker !== 'undefined') {
+    if (!order) {
+      alert('Unable to create order in database. Please check your internet connection and try again.');
+      return;
+    }
+
+    if (typeof orderTracker !== 'undefined') {
       orderTracker.registerOrder(order);
     }
 
@@ -679,13 +666,8 @@ class CheckoutSystem {
       cartSystem.clearCart();
     }
 
-    // Immediately present the Advance Payment & Policy page for this order
-    this.showAdvancePaymentPage(order || {
-      id: 'TF-' + Math.floor(1000 + Math.random() * 9000),
-      grandTotal: grandTotal,
-      advanceAmount: advanceAmount,
-      remainingAmount: remainingAmount
-    });
+    // STEP 4 REQUIREMENT: Display Advance Payment Page using the ALREADY-CREATED Order
+    this.showAdvancePaymentPage(order);
   }
 
   setupEventListeners() {

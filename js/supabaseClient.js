@@ -122,8 +122,10 @@ class SupabaseClientService {
       id: dbo.order_number || dbo.id,
       order_number: dbo.order_number || dbo.id,
       db_id: dbo.id,
+      trackingToken: dbo.tracking_token || null,
       timestamp: dbo.created_at || new Date().toISOString(),
       status: normStatus,
+      order_status: dbo.order_status || normStatus,
       payment_status: paymentStatus,
       advanceAmount: advanceAmount,
       remainingAmount: remainingAmount,
@@ -136,9 +138,11 @@ class SupabaseClientService {
       guests: guestVal,
       address: dbo.delivery_address || null,
       items: (dbo.order_items || []).map(i => ({
-        name: i.item_name,
+        name: i.food_name || i.item_name,
+        foodName: i.food_name || i.item_name,
         quantity: parseInt(i.quantity || 1, 10),
         price: parseFloat(i.price || 0),
+        subtotal: parseFloat(i.subtotal || (i.price * i.quantity) || 0),
         isVeg: true
       })),
       foodTotal: parseFloat(dbo.subtotal || dbo.total || 0),
@@ -153,6 +157,7 @@ class SupabaseClientService {
     const client = this.getClient();
     const orderNumber = 'TF-' + Math.floor(1000 + Math.random() * 9000);
     const orderType = (orderPayload.type === 'Dine-In') ? 'dine_in' : 'home_delivery';
+    const trackingToken = 'token_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 
     const parsedGuests = (orderPayload.guests !== null && orderPayload.guests !== undefined && !isNaN(orderPayload.guests))
       ? parseInt(orderPayload.guests, 10)
@@ -179,14 +184,17 @@ class SupabaseClientService {
       customer_phone: orderPayload.phone || '',
       delivery_address: orderPayload.address || null,
       guest_count: parsedGuests,
-      subtotal: parseFloat(orderPayload.foodTotal || orderPayload.grandTotal || 0),
+      subtotal: parseFloat(orderPayload.foodTotal || grandTotal),
       delivery_fee: parseFloat(orderPayload.deliveryFee || 0),
       total: grandTotal,
-      status: initialStatus,
-      payment_status: initialPaymentStatus,
+      advance_percentage: advancePct,
       advance_amount: advanceAmount,
       remaining_amount: remainingAmount,
-      payment_method: orderPayload.paymentMethod || (orderType === 'home_delivery' ? '30% Advance + COD' : 'Cash on Delivery')
+      status: initialStatus,
+      order_status: initialStatus,
+      payment_status: initialPaymentStatus,
+      payment_method: orderPayload.paymentMethod || (orderType === 'home_delivery' ? '30% Advance + COD' : 'Cash on Delivery'),
+      tracking_token: trackingToken
     };
 
     if (!client) {
@@ -227,8 +235,10 @@ class SupabaseClientService {
         const itemsToInsert = orderPayload.items.map(item => ({
           order_id: dbOrder.id,
           item_name: item.name,
+          food_name: item.name,
           quantity: parseInt(item.quantity || 1, 10),
-          price: parseFloat(item.price || 0)
+          price: parseFloat(item.price || 0),
+          subtotal: parseFloat(item.price || 0) * parseInt(item.quantity || 1, 10)
         }));
 
         await client.from('order_items').insert(itemsToInsert);
@@ -306,8 +316,10 @@ class SupabaseClientService {
         .order('created_at', { ascending: false });
 
       if (statusFilter && statusFilter !== 'all') {
-        if (statusFilter === 'pending') {
-          query = query.in('status', ['pending', 'received']);
+        if (statusFilter === 'verification_pending') {
+          query = query.or('payment_status.eq.verification_pending,status.eq.payment_verification_pending,order_status.eq.payment_verification_pending');
+        } else if (statusFilter === 'pending') {
+          query = query.in('status', ['pending', 'received', 'payment_pending']);
         } else if (statusFilter === 'accepted') {
           query = query.in('status', ['accepted', 'confirmed']);
         } else if (statusFilter === 'preparing') {
@@ -320,8 +332,6 @@ class SupabaseClientService {
           query = query.eq('status', 'completed');
         } else if (statusFilter === 'cancelled') {
           query = query.in('status', ['cancelled', 'unavailable']);
-        } else {
-          query = query.eq('status', statusFilter);
         }
       }
 
@@ -355,6 +365,7 @@ class SupabaseClientService {
 
       let query = client.from('orders').update({ 
         status: newStatus,
+        order_status: newStatus,
         updated_at: new Date().toISOString()
       });
 
@@ -396,6 +407,7 @@ class SupabaseClientService {
       const updateData = { 
         payment_status: paymentStatus,
         status: orderStatus,
+        order_status: orderStatus,
         updated_at: new Date().toISOString()
       };
 
