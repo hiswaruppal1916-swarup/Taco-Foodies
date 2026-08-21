@@ -45,15 +45,16 @@ class UIController {
 
     PROMO_SLIDES.forEach((slide, index) => {
       const activeClass = index === 0 ? 'active' : '';
+      const slideClasses = `hero-slide ${activeClass} ${slide.isCleanPoster ? 'poster-slide' : ''}`;
       const bgStyle = slide.isCleanPoster
-        ? `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.35) 0%, rgba(11, 15, 25, 0.1) 60%, rgba(11, 15, 25, 0.35) 100%), url('${slide.image}'); background-size: cover; background-position: center;`
+        ? `background-image: url('${slide.image}'); background-size: contain !important; background-repeat: no-repeat !important; background-position: center center !important; background-color: #0b0f19;`
         : `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.92) 0%, rgba(11, 15, 25, 0.65) 60%, rgba(11, 15, 25, 0.4) 100%), url('${slide.image}');`;
 
       let innerContent = '';
       if (slide.isCleanPoster) {
         innerContent = `
-          <div class="hero-slide-content poster-mode" style="margin-top: auto; padding-top: 140px;">
-            <div class="slide-actions">
+          <div class="hero-slide-content poster-mode">
+            <div class="slide-actions poster-actions">
               <button class="primary-btn hero-cta-btn" onclick="uiController.filterCategoryFromHero('${slide.filterCategory}')">
                 ${slide.cta} <span class="arrow">➔</span>
               </button>
@@ -94,7 +95,7 @@ class UIController {
       }
 
       slideHtml += `
-        <div class="hero-slide ${activeClass}" style="${bgStyle}">
+        <div class="${slideClasses}" style="${bgStyle}">
           ${innerContent}
         </div>
       `;

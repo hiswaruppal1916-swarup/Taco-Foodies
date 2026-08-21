@@ -256,6 +256,42 @@
   pointer-events: auto;
 }
 
+/* Birthday Cake & Poster Slide Responsive Containment */
+.hero-slide.poster-slide {
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-color: #0b0f19 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  padding: 20px 40px !important;
+}
+
+.hero-slide.poster-slide .hero-slide-content.poster-mode {
+  width: 100%;
+  max-width: 100%;
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-slide.poster-slide .poster-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
 .hero-slide-content {
   max-width: 580px;
 }
@@ -2455,6 +2491,29 @@
 
   .hero-slide {
     padding: 20px 16px;
+  }
+
+  .hero-slide.poster-slide {
+    background-position: center top 5px !important;
+    padding: 10px 8px 35px 8px !important;
+  }
+
+  .hero-slide.poster-slide .poster-actions {
+    padding: 6px 8px;
+    gap: 6px;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .hero-slide.poster-slide .poster-actions .hero-cta-btn,
+  .hero-slide.poster-slide .poster-actions .hero-add-cart-btn {
+    font-size: 0.76rem !important;
+    padding: 6px 10px !important;
+  }
+
+  .hero-slide.poster-slide .poster-actions .secondary-btn {
+    font-size: 0.74rem !important;
+    padding: 5px 8px !important;
   }
 
   .slide-badge {
