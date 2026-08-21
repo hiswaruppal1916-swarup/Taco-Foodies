@@ -46,11 +46,6 @@
           <button id="openOwnerLoginModalBtn" class="owner-sync-icon-btn" title="Owner Dashboard Login (/owner-dashboard)">
             🔑
           </button>
-
-          <!-- Owner Google Sheet Sync Settings Icon Button -->
-          <button id="openOwnerSyncModalBtn" class="owner-sync-icon-btn" title="Owner Google Sheet Settings">
-            ⚙️
-          </button>
         </div>
       </div>
     </div>
@@ -539,9 +534,14 @@
           <h2 style="font-size: 1.5rem; color: var(--fk-yellow); font-weight: 900;">👑 TACO Foodies - Owner Dashboard</h2>
           <span style="font-size: 0.8rem; color: var(--taco-teal);">Live Supabase Database & Realtime Status Center</span>
         </div>
-        <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="ownerDashboard.handleOwnerLogout()">
-          🔒 Sign Out
-        </button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button id="openOwnerSyncModalBtn" class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" title="Owner Google Sheet Menu Sync Settings">
+            ⚙️ Menu & Google Sheet Sync
+          </button>
+          <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="ownerDashboard.handleOwnerLogout()">
+            🔒 Sign Out
+          </button>
+        </div>
       </div>
 
       <!-- 1. Summary Cards Grid -->

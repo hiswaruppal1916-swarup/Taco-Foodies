@@ -131,6 +131,27 @@ class GoogleSheetsSync {
     return DEFAULT_MENU_DATA;
   }
 
+  async openOwnerSyncModal() {
+    const modal = document.getElementById('ownerSyncModal');
+    const sheetInput = document.getElementById('googleSheetUrlInput');
+
+    if (!modal) return;
+
+    if (typeof supabaseService !== 'undefined') {
+      const isOwner = await supabaseService.isOwnerLoggedIn();
+      if (!isOwner) {
+        alert('🔐 Access Denied! Only authenticated restaurant owners can access Google Sheet menu management.');
+        if (typeof ownerDashboard !== 'undefined' && ownerDashboard.showLoginModal) {
+          ownerDashboard.showLoginModal('Please sign in with authorized owner credentials to access menu settings.');
+        }
+        return;
+      }
+    }
+
+    if (sheetInput) sheetInput.value = localStorage.getItem(this.sheetUrlKey) || '';
+    modal.classList.add('active');
+  }
+
   setupAdminModal() {
     const modalBtn = document.getElementById('openOwnerSyncModalBtn');
     const modal = document.getElementById('ownerSyncModal');
@@ -143,8 +164,7 @@ class GoogleSheetsSync {
 
     if (modalBtn) {
       modalBtn.addEventListener('click', () => {
-        if (sheetInput) sheetInput.value = localStorage.getItem(this.sheetUrlKey) || '';
-        modal.classList.add('active');
+        this.openOwnerSyncModal();
       });
     }
 
@@ -154,6 +174,15 @@ class GoogleSheetsSync {
 
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
+        if (typeof supabaseService !== 'undefined') {
+          const isOwner = await supabaseService.isOwnerLoggedIn();
+          if (!isOwner) {
+            alert('🔐 Access Denied! Only authenticated restaurant owners can modify Google Sheet menu settings.');
+            modal.classList.remove('active');
+            return;
+          }
+        }
+
         const url = sheetInput ? sheetInput.value.trim() : '';
         if (url) {
           const success = await this.fetchSheetData(url);
@@ -168,7 +197,16 @@ class GoogleSheetsSync {
     }
 
     if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
+      resetBtn.addEventListener('click', async () => {
+        if (typeof supabaseService !== 'undefined') {
+          const isOwner = await supabaseService.isOwnerLoggedIn();
+          if (!isOwner) {
+            alert('🔐 Access Denied! Only authenticated restaurant owners can reset menu settings.');
+            modal.classList.remove('active');
+            return;
+          }
+        }
+
         localStorage.removeItem(this.sheetUrlKey);
         localStorage.removeItem(this.customMenuKey);
         const statusEl = document.getElementById('sheetSyncStatus');
