@@ -45,16 +45,14 @@ class UIController {
 
     PROMO_SLIDES.forEach((slide, index) => {
       const activeClass = index === 0 ? 'active' : '';
-      slideHtml += `
-        <div class="hero-slide ${activeClass}" style="background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.92) 0%, rgba(11, 15, 25, 0.65) 60%, rgba(11, 15, 25, 0.4) 100%), url('${slide.image}');">
-          <div class="hero-slide-content">
-            <span class="slide-badge">${slide.badge}</span>
-            <h1 class="slide-title">${slide.title}</h1>
-            <p class="slide-subtitle">${slide.subtitle}</p>
-            <div class="slide-offer-row">
-              <span class="slide-offer">${slide.offer}</span>
-              <span class="slide-code">CODE: <strong>${slide.code}</strong></span>
-            </div>
+      const bgStyle = slide.isCleanPoster
+        ? `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.35) 0%, rgba(11, 15, 25, 0.1) 60%, rgba(11, 15, 25, 0.35) 100%), url('${slide.image}'); background-size: cover; background-position: center;`
+        : `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.92) 0%, rgba(11, 15, 25, 0.65) 60%, rgba(11, 15, 25, 0.4) 100%), url('${slide.image}');`;
+
+      let innerContent = '';
+      if (slide.isCleanPoster) {
+        innerContent = `
+          <div class="hero-slide-content poster-mode" style="margin-top: auto; padding-top: 140px;">
             <div class="slide-actions">
               <button class="primary-btn hero-cta-btn" onclick="uiController.filterCategoryFromHero('${slide.filterCategory}')">
                 ${slide.cta} <span class="arrow">➔</span>
@@ -67,6 +65,37 @@ class UIController {
               <button class="secondary-btn" onclick="cartSystem.openCartDrawer()">View Cart</button>
             </div>
           </div>
+        `;
+      } else {
+        innerContent = `
+          <div class="hero-slide-content">
+            ${slide.badge ? `<span class="slide-badge">${slide.badge}</span>` : ''}
+            <h1 class="slide-title">${slide.title}</h1>
+            ${slide.subtitle ? `<p class="slide-subtitle">${slide.subtitle}</p>` : ''}
+            ${slide.offer ? `
+              <div class="slide-offer-row">
+                <span class="slide-offer">${slide.offer}</span>
+                ${slide.code ? `<span class="slide-code">CODE: <strong>${slide.code}</strong></span>` : ''}
+              </div>
+            ` : ''}
+            <div class="slide-actions">
+              <button class="primary-btn hero-cta-btn" onclick="uiController.filterCategoryFromHero('${slide.filterCategory}')">
+                ${slide.cta} <span class="arrow">➔</span>
+              </button>
+              ${slide.dishId ? `
+                <button class="primary-btn hero-add-cart-btn" style="background: var(--fk-blue);" onclick="uiController.quickAddToCart('${slide.dishId}', this)">
+                  <span>🛒 Add to Cart</span>
+                </button>
+              ` : ''}
+              <button class="secondary-btn" onclick="cartSystem.openCartDrawer()">View Cart</button>
+            </div>
+          </div>
+        `;
+      }
+
+      slideHtml += `
+        <div class="hero-slide ${activeClass}" style="${bgStyle}">
+          ${innerContent}
         </div>
       `;
 
@@ -225,7 +254,7 @@ class UIController {
 
           <div class="food-card-footer">
             <div class="price-box">
-              <span class="curr-price">₹${dish.price}</span>
+              <span class="curr-price" style="${(dish.price === 0 || dish.isFree) ? 'color: #2e7d32; font-weight: 800;' : ''}">${(dish.price === 0 || dish.isFree) ? 'FREE' : `₹${dish.price}`}</span>
               ${dish.originalPrice > dish.price ? `<span class="orig-price">₹${dish.originalPrice}</span>` : ''}
             </div>
             <div class="card-action-group">
@@ -371,7 +400,7 @@ class UIController {
           <p class="detail-desc">${dish.description}</p>
           
           <div class="detail-pricing">
-            <span class="detail-curr">₹${dish.price}</span>
+            <span class="detail-curr" style="${(dish.price === 0 || dish.isFree) ? 'color: #2e7d32; font-weight: 800;' : ''}">${(dish.price === 0 || dish.isFree) ? 'FREE' : `₹${dish.price}`}</span>
             ${dish.originalPrice > dish.price ? `<span class="detail-orig">₹${dish.originalPrice}</span>` : ''}
           </div>
 

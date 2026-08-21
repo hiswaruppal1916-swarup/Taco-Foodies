@@ -114,7 +114,7 @@ class CheckoutSystem {
         <div class="checkout-qty-wrapper">
           <div class="checkout-qty-header">
             <span>${item.isVeg ? '🟢' : '🔴'} ${item.name}</span>
-            <span class="checkout-price-formula">₹${item.price} × ${item.quantity} = ₹${itemTotal}</span>
+            <span class="checkout-price-formula">${item.price === 0 ? 'FREE' : `₹${item.price} × ${item.quantity} = ₹${itemTotal}`}</span>
           </div>
           <div class="checkout-qty-row">
             <span style="font-weight: 700; color: var(--text-secondary); font-size: 0.9rem;">Select Quantity:</span>

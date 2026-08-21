@@ -176,7 +176,7 @@ class CartSystem {
               <h4 class="cart-item-title">${item.name}</h4>
             </div>
             <div class="cart-item-price-row">
-              <span class="current-price">₹${item.price}</span>
+              <span class="current-price" style="${(item.price === 0 || item.isFree) ? 'color: #2e7d32; font-weight: 800;' : ''}">${(item.price === 0 || item.isFree) ? 'FREE' : `₹${item.price}`}</span>
               ${item.originalPrice > item.price ? `<span class="old-price">₹${item.originalPrice}</span>` : ''}
             </div>
           </div>
