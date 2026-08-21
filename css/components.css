@@ -258,26 +258,41 @@
 
 /* Birthday Cake & Poster Slide Responsive Fill & Glass Buttons */
 .hero-slide.poster-slide {
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
+  background: #0b0f19 !important;
+  position: absolute !important;
+  inset: 0 !important;
+  padding: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   align-items: center !important;
-  padding: 20px 40px 25px 40px !important;
+  overflow: hidden !important;
+}
+
+.hero-slide.poster-slide .poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain !important;
+  object-position: center !important;
+  display: block;
 }
 
 .hero-slide.poster-slide .hero-slide-content.poster-mode {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
   width: 100%;
   max-width: 100%;
-  margin-top: auto;
   display: flex;
   justify-content: center;
   z-index: 5;
+  padding: 0 12px;
+  pointer-events: none;
 }
 
 .hero-slide.poster-slide .poster-actions {
+  pointer-events: auto;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -286,26 +301,26 @@
   background: rgba(11, 15, 25, 0.35) !important;
   backdrop-filter: blur(4px) !important;
   -webkit-backdrop-filter: blur(4px) !important;
-  padding: 8px 14px !important;
+  padding: 6px 14px !important;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .hero-slide.poster-slide .poster-actions .hero-cta-btn {
-  background: rgba(255, 87, 34, 0.85) !important;
+  background: rgba(255, 87, 34, 0.88) !important;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .hero-slide.poster-slide .poster-actions .hero-add-cart-btn {
-  background: rgba(40, 116, 240, 0.85) !important;
+  background: rgba(40, 116, 240, 0.88) !important;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .hero-slide.poster-slide .poster-actions .secondary-btn {
-  background: rgba(255, 255, 255, 0.18) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #ffffff !important;
@@ -2513,14 +2528,17 @@
   }
 
   .hero-slide.poster-slide {
-    background-size: cover !important;
-    background-position: center center !important;
-    padding: 10px 8px 24px 8px !important;
+    padding: 0 !important;
+  }
+
+  .hero-slide.poster-slide .hero-slide-content.poster-mode {
+    bottom: 8px !important;
+    padding: 0 8px !important;
   }
 
   .hero-slide.poster-slide .poster-actions {
-    padding: 5px 8px !important;
-    gap: 6px !important;
+    padding: 4px 6px !important;
+    gap: 5px !important;
     width: 100% !important;
     max-width: 350px !important;
     background: rgba(11, 15, 25, 0.25) !important;
@@ -2531,13 +2549,13 @@
 
   .hero-slide.poster-slide .poster-actions .hero-cta-btn,
   .hero-slide.poster-slide .poster-actions .hero-add-cart-btn {
-    font-size: 0.78rem !important;
-    padding: 6px 10px !important;
+    font-size: 0.76rem !important;
+    padding: 5px 8px !important;
   }
 
   .hero-slide.poster-slide .poster-actions .secondary-btn {
-    font-size: 0.74rem !important;
-    padding: 5px 8px !important;
+    font-size: 0.72rem !important;
+    padding: 4px 6px !important;
   }
 
   .slide-badge {

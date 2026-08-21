@@ -47,12 +47,13 @@ class UIController {
       const activeClass = index === 0 ? 'active' : '';
       const slideClasses = `hero-slide ${activeClass} ${slide.isCleanPoster ? 'poster-slide' : ''}`;
       const bgStyle = slide.isCleanPoster
-        ? `background-image: url('${slide.image}');`
+        ? ``
         : `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.92) 0%, rgba(11, 15, 25, 0.65) 60%, rgba(11, 15, 25, 0.4) 100%), url('${slide.image}');`;
 
       let innerContent = '';
       if (slide.isCleanPoster) {
         innerContent = `
+          <img src="${slide.image}" alt="${slide.title}" class="poster-img" loading="eager">
           <div class="hero-slide-content poster-mode">
             <div class="slide-actions poster-actions">
               <button class="primary-btn hero-cta-btn" onclick="uiController.filterCategoryFromHero('${slide.filterCategory}')">
