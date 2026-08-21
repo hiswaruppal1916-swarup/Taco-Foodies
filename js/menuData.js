@@ -1245,6 +1245,16 @@ const DEFAULT_MENU_DATA = [
 const PROMO_SLIDES = [
   {
     id: 1,
+    dishId: "tf_71",
+    title: "Birthday Cake",
+    badge: "🎂 Celebration Special",
+    image: "images/birthday_cake_hero.jpg",
+    cta: "Order Cake Now",
+    filterCategory: "Combos & Rotis",
+    isCleanPoster: true
+  },
+  {
+    id: 2,
     dishId: "tf_29",
     title: "Royal Chicken Dum Biryani",
     subtitle: "AUTHENTIC DUM SPICE & SAFFRON RICE",
@@ -1256,7 +1266,7 @@ const PROMO_SLIDES = [
     filterCategory: "Rice & Biryani"
   },
   {
-    id: 2,
+    id: 3,
     dishId: "tf_2",
     title: "Signature Mexican Tacos",
     subtitle: "AUTHENTIC CHEESY TACO FEAST",
@@ -1268,7 +1278,7 @@ const PROMO_SLIDES = [
     filterCategory: "Starters"
   },
   {
-    id: 3,
+    id: 4,
     dishId: "tf_72",
     title: "Blue Mojito",
     subtitle: "ICE CHILLED BLUE CURACAO MOCKTAIL",
@@ -1280,7 +1290,7 @@ const PROMO_SLIDES = [
     filterCategory: "Drinks & Beverages"
   },
   {
-    id: 4,
+    id: 5,
     dishId: "tf_70",
     title: "Classic Virgin Mojito",
     subtitle: "FRESH LIME, MINT & SPARKLING SODA",
@@ -1292,7 +1302,7 @@ const PROMO_SLIDES = [
     filterCategory: "Drinks & Beverages"
   },
   {
-    id: 5,
+    id: 6,
     dishId: "tf_69",
     title: "Orange Mojito",
     subtitle: "CITRUS ORANGE & FRESH MINT BLAST",
@@ -1302,16 +1312,6 @@ const PROMO_SLIDES = [
     image: "images/orange_mojito_hero.jpg",
     cta: "Order Orange Mojito",
     filterCategory: "Drinks & Beverages"
-  },
-  {
-    id: 6,
-    dishId: "tf_71",
-    title: "Birthday Cake",
-    badge: "🎂 Celebration Special",
-    image: "images/birthday_cake_hero.jpg",
-    cta: "Order Cake Now",
-    filterCategory: "Combos & Rotis",
-    isCleanPoster: true
   }
 ];
 
