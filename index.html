@@ -388,28 +388,7 @@
     </a>
   </div>
 
-  <!-- ==========================================
-       13. OWNER GOOGLE SHEET SYNC MODAL
-       ========================================== -->
-  <div id="ownerSyncModal" class="modal-backdrop">
-    <div class="modal-box">
-      <button id="closeSyncModalBtn" class="close-modal-btn">✕</button>
-      <h3 style="font-size: 1.3rem; margin-bottom: 10px; color: var(--fk-yellow);">⚙️ Restaurant Owner - Google Sheet Sync</h3>
-      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Connect your published Google Sheet CSV URL below to update food names, prices, discounts, and images in real time without writing code!
-      </p>
 
-      <div id="sheetSyncStatus" style="margin-bottom: 14px;"></div>
-
-      <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Published Google Sheet CSV URL:</label>
-      <input type="text" id="googleSheetUrlInput" class="header-search-input" style="padding-left: 12px; margin-bottom: 16px;" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv">
-
-      <div style="display: flex; gap: 10px;">
-        <button id="saveSheetUrlBtn" class="primary-btn" style="flex: 1;">Save & Sync Menu</button>
-        <button id="resetSheetUrlBtn" class="secondary-btn">Reset Default</button>
-      </div>
-    </div>
-  </div>
 
   <!-- ==========================================
        14. DISH DETAIL LIGHTBOX MODAL
@@ -569,6 +548,27 @@
 
       <!-- 4. Analytics Summary Dashboard -->
       <div id="ownerAnalyticsContainer" class="analytics-section-grid" style="margin-top: 24px;"></div>
+
+      <!-- 5. OWNER GOOGLE SHEET SYNC CHILD MODAL -->
+      <div id="ownerSyncModal" class="modal-backdrop">
+        <div class="modal-box">
+          <button id="closeSyncModalBtn" class="close-modal-btn">✕</button>
+          <h3 style="font-size: 1.3rem; margin-bottom: 10px; color: var(--fk-yellow);">⚙️ Restaurant Owner - Google Sheet Sync</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Connect your published Google Sheet CSV URL below to update food names, prices, discounts, and images in real time without writing code!
+          </p>
+
+          <div id="sheetSyncStatus" style="margin-bottom: 14px;"></div>
+
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">Published Google Sheet CSV URL:</label>
+          <input type="text" id="googleSheetUrlInput" class="header-search-input" style="padding-left: 12px; margin-bottom: 16px;" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv">
+
+          <div style="display: flex; gap: 10px;">
+            <button id="saveSheetUrlBtn" class="primary-btn" style="flex: 1;">Save & Sync Menu</button>
+            <button id="resetSheetUrlBtn" class="secondary-btn">Reset Default</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

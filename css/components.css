@@ -1692,6 +1692,11 @@
   visibility: visible;
 }
 
+/* Owner Google Sheet Sync Child Modal Stacking */
+#ownerSyncModal {
+  z-index: 5000;
+}
+
 .modal-box {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
