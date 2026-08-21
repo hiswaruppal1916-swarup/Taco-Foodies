@@ -256,17 +256,16 @@
   pointer-events: auto;
 }
 
-/* Birthday Cake & Poster Slide Responsive Containment */
+/* Birthday Cake & Poster Slide Responsive Fill & Glass Buttons */
 .hero-slide.poster-slide {
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
+  background-size: cover !important;
   background-position: center center !important;
-  background-color: #0b0f19 !important;
+  background-repeat: no-repeat !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: flex-end !important;
   align-items: center !important;
-  padding: 20px 40px !important;
+  padding: 20px 40px 25px 40px !important;
 }
 
 .hero-slide.poster-slide .hero-slide-content.poster-mode {
@@ -275,6 +274,7 @@
   margin-top: auto;
   display: flex;
   justify-content: center;
+  z-index: 5;
 }
 
 .hero-slide.poster-slide .poster-actions {
@@ -283,13 +283,32 @@
   gap: 10px;
   justify-content: center;
   align-items: center;
-  background: rgba(11, 15, 25, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 10px 16px;
+  background: rgba(11, 15, 25, 0.35) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  padding: 8px 14px !important;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.hero-slide.poster-slide .poster-actions .hero-cta-btn {
+  background: rgba(255, 87, 34, 0.85) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.hero-slide.poster-slide .poster-actions .hero-add-cart-btn {
+  background: rgba(40, 116, 240, 0.85) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.hero-slide.poster-slide .poster-actions .secondary-btn {
+  background: rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff !important;
 }
 
 .hero-slide-content {
@@ -2494,20 +2513,25 @@
   }
 
   .hero-slide.poster-slide {
-    background-position: center top 5px !important;
-    padding: 10px 8px 35px 8px !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    padding: 10px 8px 24px 8px !important;
   }
 
   .hero-slide.poster-slide .poster-actions {
-    padding: 6px 8px;
-    gap: 6px;
-    width: 100%;
-    max-width: 340px;
+    padding: 5px 8px !important;
+    gap: 6px !important;
+    width: 100% !important;
+    max-width: 350px !important;
+    background: rgba(11, 15, 25, 0.25) !important;
+    backdrop-filter: blur(3px) !important;
+    -webkit-backdrop-filter: blur(3px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
   }
 
   .hero-slide.poster-slide .poster-actions .hero-cta-btn,
   .hero-slide.poster-slide .poster-actions .hero-add-cart-btn {
-    font-size: 0.76rem !important;
+    font-size: 0.78rem !important;
     padding: 6px 10px !important;
   }
 

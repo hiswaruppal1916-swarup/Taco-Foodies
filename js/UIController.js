@@ -47,7 +47,7 @@ class UIController {
       const activeClass = index === 0 ? 'active' : '';
       const slideClasses = `hero-slide ${activeClass} ${slide.isCleanPoster ? 'poster-slide' : ''}`;
       const bgStyle = slide.isCleanPoster
-        ? `background-image: url('${slide.image}'); background-size: contain !important; background-repeat: no-repeat !important; background-position: center center !important; background-color: #0b0f19;`
+        ? `background-image: url('${slide.image}');`
         : `background-image: linear-gradient(90deg, rgba(11, 15, 25, 0.92) 0%, rgba(11, 15, 25, 0.65) 60%, rgba(11, 15, 25, 0.4) 100%), url('${slide.image}');`;
 
       let innerContent = '';
