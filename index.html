@@ -3,9 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TACO Foodies – Award-Winning Mexican & Chinese Restaurant</title>
-  <meta name="description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum. 5.0 Rated, Open 24 Hours.">
-  
+  <title>TACO Foodies — Mexican & Chinese Restaurant</title>
+  <meta name="description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum. Open 24 Hours for Dine-in, Takeaway & Delivery.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://tacofoodies.in/">
+
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#121212">
+
+  <!-- Open Graph / Social Sharing Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TACO Foodies — Mexican & Chinese Restaurant">
+  <meta property="og:description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum.">
+  <meta property="og:image" content="images/hero_taco.png">
+  <meta property="og:site_name" content="TACO Foodies">
+
+  <!-- Twitter Card Metadata -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TACO Foodies — Mexican & Chinese Restaurant">
+  <meta name="twitter:description" content="TACO Foodies in Bhupati Nagar, West Bengal. Premium Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum.">
+  <meta name="twitter:image" content="images/hero_taco.png">
+
+  <!-- Schema.org JSON-LD Structured Data for Restaurant / LocalBusiness -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "TACO Foodies",
+    "image": "images/hero_taco.png",
+    "description": "TACO Foodies is a Mexican & Chinese fusion restaurant serving Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles, and Dim Sum in Bhupati Nagar, West Bengal.",
+    "servesCuisine": ["Mexican", "Chinese", "Indo-Chinese", "Fusion"],
+    "telephone": "+918400310013",
+    "priceRange": "₹₹",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Madha Khali, Bhupati Nagar",
+      "addressLocality": "Bhupati Nagar",
+      "addressRegion": "West Bengal",
+      "postalCode": "721425",
+      "addressCountry": "IN"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 21.9956379,
+      "longitude": 87.7408681
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "00:00",
+        "closes": "23:59"
+      }
+    ],
+    "hasMenu": "https://tacofoodies.in/#digitalMenuSection",
+    "acceptsReservations": "False"
+  }
+  </script>
+
   <!-- Supabase JS Client & CSS Stylesheets -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="css/main.css">
@@ -318,6 +386,16 @@
     </section>
 
   </main>
+
+  <!-- ==========================================
+       FOOTER (Semantic HTML)
+       ========================================== -->
+  <footer class="site-footer" style="background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 24px 0; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+    <div class="container">
+      <p>© 2026 TACO Foodies — Mexican & Chinese Restaurant. All rights reserved.</p>
+      <p style="margin-top: 4px;">Bhupati Nagar, West Bengal 721425 | Call: <a href="tel:08400310013" style="color: var(--taco-teal);">084003 10013</a></p>
+    </div>
+  </footer>
 
   <!-- ==========================================
        11. SLIDE-OVER CART DRAWER

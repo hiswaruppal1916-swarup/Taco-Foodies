@@ -1,6 +1,6 @@
 # Taco-Foodies 🌮🍜
 
-**Award-Winning Mexican & Chinese Fusion Restaurant Web Application**
+**Mexican & Chinese Fusion Restaurant Web Application**
 
 ## 🌟 Key Features
 - 🌮 **Flipkart-Style E-Commerce Layout**: Interactive horizontal carousels, promotional hero slider, category pills, and full digital menu matrix.
