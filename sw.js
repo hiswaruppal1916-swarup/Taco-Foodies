@@ -16,6 +16,8 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/site.webmanifest',
+  '/sitemap.xml',
+  '/robots.txt',
   '/css/main.css',
   '/css/components.css',
   '/css/animations.css',
