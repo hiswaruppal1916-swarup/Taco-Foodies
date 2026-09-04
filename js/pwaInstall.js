@@ -13,32 +13,49 @@ class PWAInstallManager {
   }
 
   init() {
-    // 1. Detect Standalone Mode
+    // 1. Clear any legacy permanent installed flag to support re-installation after uninstallation
+    try {
+      localStorage.removeItem('taco_pwa_installed');
+      localStorage.removeItem('taco_pwa_dismiss_time');
+    } catch (e) {}
+
+    // 2. Detect Standalone Mode (Runtime State)
     this.detectStandalone();
 
-    // 2. Detect iOS Device
+    // 3. Detect iOS Device
     this.detectIOS();
 
-    // 3. Register Service Worker
+    // 4. Register Service Worker
     this.registerServiceWorker();
 
-    // 4. Bind PWA Event Listeners
+    // 5. Bind PWA Event Listeners
     this.bindEvents();
 
-    // 5. Initial UI Sync
+    // 6. Initial UI Sync
     document.addEventListener('DOMContentLoaded', () => {
       this.syncUI();
+      this.attachButtonListeners();
     });
   }
 
   detectStandalone() {
-    this.isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone === true ||
-                       document.referrer.includes('android-app://');
-    
+    // Determine runtime standalone display mode
+    this.isStandalone = (
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+
+    // Dynamic listener for display-mode changes
+    try {
+      window.matchMedia('(display-mode: standalone)').addEventListener('change', (evt) => {
+        this.isStandalone = evt.matches;
+        this.syncUI();
+      });
+    } catch (e) {}
+
     if (this.isStandalone) {
       console.log('📱 TACO Foodies running in PWA Standalone Mode');
-      localStorage.setItem('taco_pwa_installed', 'true');
     }
   }
 
@@ -52,7 +69,7 @@ class PWAInstallManager {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then((reg) => {
-            console.log('⚡ TACO Foodies Service Worker Registered successfully:', reg.scope);
+            console.log('⚡ TACO Foodies Service Worker Registered:', reg.scope);
           })
           .catch((err) => {
             console.warn('Service Worker registration error (non-fatal):', err);
@@ -64,7 +81,6 @@ class PWAInstallManager {
   bindEvents() {
     // Capture real browser installation event
     window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent default mini-infobar
       e.preventDefault();
       this.deferredPrompt = e;
       console.log('💡 PWA beforeinstallprompt event captured');
@@ -72,7 +88,7 @@ class PWAInstallManager {
       // Update UI elements to show install option
       this.syncUI();
 
-      // Automatically offer install banner if user hasn't dismissed recently
+      // Automatically offer install banner if user hasn't dismissed in current session
       this.checkAndShowAutoBanner();
     });
 
@@ -80,10 +96,16 @@ class PWAInstallManager {
     window.addEventListener('appinstalled', () => {
       console.log('🎉 TACO Foodies PWA installed successfully!');
       this.deferredPrompt = null;
-      localStorage.setItem('taco_pwa_installed', 'true');
       this.hideInstallBanner();
       this.syncUI();
     });
+  }
+
+  attachButtonListeners() {
+    const dismissBtn = document.getElementById('pwaDismissBtn');
+    if (dismissBtn) {
+      dismissBtn.onclick = (e) => this.dismissInstallBanner(e);
+    }
   }
 
   syncUI() {
@@ -91,39 +113,44 @@ class PWAInstallManager {
     const mobileActionBtn = document.getElementById('mobilePwaInstallBtn');
     const installBanner = document.getElementById('pwaInstallBanner');
 
-    if (this.isStandalone || localStorage.getItem('taco_pwa_installed') === 'true') {
+    // CASE 1: Currently running in standalone/installed app mode
+    if (this.isStandalone) {
       if (headerBtn) headerBtn.style.display = 'none';
       if (mobileActionBtn) mobileActionBtn.style.display = 'none';
-      if (installBanner) installBanner.style.display = 'none';
+      if (installBanner) {
+        installBanner.classList.remove('visible');
+        installBanner.style.display = 'none';
+      }
       return;
     }
 
-    // If browser supports install prompt or is iOS, display install buttons
+    // CASE 2: Visiting in standard browser and app is NOT currently standalone
+    // If browser supports install prompt or is iOS Safari, show install buttons
     if (this.deferredPrompt || this.isIOS) {
       if (headerBtn) headerBtn.style.display = 'inline-flex';
       if (mobileActionBtn) mobileActionBtn.style.display = 'flex';
+    } else {
+      if (headerBtn) headerBtn.style.display = 'none';
+      if (mobileActionBtn) mobileActionBtn.style.display = 'none';
     }
   }
 
   checkAndShowAutoBanner() {
-    if (this.isStandalone || localStorage.getItem('taco_pwa_installed') === 'true') {
+    if (this.isStandalone) {
       return;
     }
 
-    const lastDismiss = localStorage.getItem('taco_pwa_dismiss_time');
-    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
-
-    if (lastDismiss && (Date.now() - parseInt(lastDismiss, 10) < sevenDaysInMs)) {
-      // User dismissed within last 7 days, don't show auto banner (manual button click still works)
+    // Check if banner was dismissed in this session
+    if (sessionStorage.getItem('taco_pwa_banner_dismissed') === 'true') {
       return;
     }
 
-    // Show banner after 2.5 seconds
+    // Show banner after 2 seconds
     setTimeout(() => {
-      if (this.deferredPrompt && !this.isStandalone) {
+      if (this.deferredPrompt && !this.isStandalone && sessionStorage.getItem('taco_pwa_banner_dismissed') !== 'true') {
         this.showInstallBanner();
       }
-    }, 2500);
+    }, 2000);
   }
 
   async triggerInstallPrompt() {
@@ -134,12 +161,10 @@ class PWAInstallManager {
       
       if (choiceResult.outcome === 'accepted') {
         console.log('User accepted TACO Foodies PWA install prompt');
-        localStorage.setItem('taco_pwa_installed', 'true');
         this.hideInstallBanner();
       } else {
         console.log('User dismissed TACO Foodies PWA install prompt');
-        localStorage.setItem('taco_pwa_dismiss_time', Date.now().toString());
-        this.hideInstallBanner();
+        this.dismissInstallBanner();
       }
       this.deferredPrompt = null;
       this.syncUI();
@@ -155,7 +180,10 @@ class PWAInstallManager {
 
   showInstallBanner() {
     const banner = document.getElementById('pwaInstallBanner');
-    if (banner && !this.isStandalone && localStorage.getItem('taco_pwa_installed') !== 'true') {
+    if (banner && !this.isStandalone && sessionStorage.getItem('taco_pwa_banner_dismissed') !== 'true') {
+      banner.style.display = 'flex';
+      banner.removeAttribute('aria-hidden');
+      void banner.offsetWidth; // Force reflow
       banner.classList.add('visible');
     }
   }
@@ -164,12 +192,22 @@ class PWAInstallManager {
     const banner = document.getElementById('pwaInstallBanner');
     if (banner) {
       banner.classList.remove('visible');
+      setTimeout(() => {
+        if (!banner.classList.contains('visible')) {
+          banner.style.display = 'none';
+          banner.setAttribute('aria-hidden', 'true');
+        }
+      }, 400);
     }
   }
 
-  dismissInstallBanner() {
+  dismissInstallBanner(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     this.hideInstallBanner();
-    localStorage.setItem('taco_pwa_dismiss_time', Date.now().toString());
+    sessionStorage.setItem('taco_pwa_banner_dismissed', 'true');
   }
 
   showIOSInstallModal() {

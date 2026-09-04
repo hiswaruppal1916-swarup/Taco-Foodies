@@ -675,7 +675,7 @@
     </div>
     <div class="pwa-banner-actions">
       <button class="pwa-install-btn-primary" onclick="pwaInstallManager.triggerInstallPrompt()">Install</button>
-      <button class="pwa-dismiss-btn" onclick="pwaInstallManager.dismissInstallBanner()" title="Dismiss">✕</button>
+      <button id="pwaDismissBtn" class="pwa-dismiss-btn" onclick="pwaInstallManager.dismissInstallBanner(event)" aria-label="Close Install Banner" title="Dismiss">✕</button>
     </div>
   </div>
 
