@@ -132,11 +132,15 @@ class PWAInstallManager {
     } else {
       if (headerBtn) headerBtn.style.display = 'none';
       if (mobileActionBtn) mobileActionBtn.style.display = 'none';
+      if (installBanner) {
+        installBanner.classList.remove('visible');
+        installBanner.style.display = 'none';
+      }
     }
   }
 
   checkAndShowAutoBanner() {
-    if (this.isStandalone) {
+    if (this.isStandalone || !this.deferredPrompt) {
       return;
     }
 
@@ -145,7 +149,7 @@ class PWAInstallManager {
       return;
     }
 
-    // Show banner after 2 seconds
+    // Show banner after 2 seconds if browser prompt is ready
     setTimeout(() => {
       if (this.deferredPrompt && !this.isStandalone && sessionStorage.getItem('taco_pwa_banner_dismissed') !== 'true') {
         this.showInstallBanner();
@@ -155,32 +159,33 @@ class PWAInstallManager {
 
   async triggerInstallPrompt() {
     if (this.deferredPrompt) {
-      // Trigger real browser PWA install prompt
-      this.deferredPrompt.prompt();
-      const choiceResult = await this.deferredPrompt.userChoice;
-      
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted TACO Foodies PWA install prompt');
-        this.hideInstallBanner();
-      } else {
-        console.log('User dismissed TACO Foodies PWA install prompt');
-        this.dismissInstallBanner();
+      // Direct Native PWA Install Prompt (No custom instruction alert first)
+      try {
+        this.deferredPrompt.prompt();
+        const choiceResult = await this.deferredPrompt.userChoice;
+        
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted TACO Foodies PWA install prompt');
+          this.hideInstallBanner();
+        } else {
+          console.log('User dismissed TACO Foodies PWA install prompt');
+          this.dismissInstallBanner();
+        }
+      } catch (err) {
+        console.warn('PWA install prompt error:', err);
       }
       this.deferredPrompt = null;
       this.syncUI();
     } else if (this.isIOS) {
-      // Display iOS Safari Add-to-Home-Screen Modal
+      // Platform-specific iOS Safari Add-to-Home-Screen instructions fallback
       this.showIOSInstallModal();
-    } else if (this.isStandalone) {
-      alert('🌮 TACO Foodies is already installed and running as an app!');
-    } else {
-      alert('To install TACO Foodies:\n1. Open browser menu (⋮ or ⋯)\n2. Select "Add to Home screen" or "Install app"');
     }
+    // No alert() instruction popup on unsupported or non-iOS browsers!
   }
 
   showInstallBanner() {
     const banner = document.getElementById('pwaInstallBanner');
-    if (banner && !this.isStandalone && sessionStorage.getItem('taco_pwa_banner_dismissed') !== 'true') {
+    if (banner && !this.isStandalone && this.deferredPrompt && sessionStorage.getItem('taco_pwa_banner_dismissed') !== 'true') {
       banner.style.display = 'flex';
       banner.removeAttribute('aria-hidden');
       void banner.offsetWidth; // Force reflow
@@ -214,8 +219,6 @@ class PWAInstallManager {
     const modal = document.getElementById('iosPwaModal');
     if (modal) {
       modal.classList.add('active');
-    } else {
-      alert('To install TACO Foodies on iOS:\n1. Tap the Share icon (⎋) below\n2. Scroll down and tap "Add to Home Screen (➕)"');
     }
   }
 

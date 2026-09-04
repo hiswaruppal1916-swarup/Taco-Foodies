@@ -2467,35 +2467,89 @@
 /* Responsive Media Queries & Mobile Optimization */
 @media (max-width: 768px) {
   .header-top-bar {
-    gap: 6px;
-    padding: 8px 0;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px 8px !important;
+    padding: 8px 0 !important;
+  }
+
+  .brand-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    max-width: 50%;
+  }
+
+  .brand-logo .logo-icon {
+    font-size: 1.4rem !important;
+  }
+
+  .brand-logo .main-name {
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+    white-space: nowrap;
+  }
+
+  .brand-logo .tagline {
+    font-size: 0.52rem !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap;
+  }
+
+  .header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
   }
 
   .header-contact-actions {
     display: flex !important;
-    gap: 4px;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
   }
 
-  .header-call-btn, .header-wa-btn {
-    padding: 5px 8px;
-    font-size: 0.72rem;
-    border-radius: var(--radius-sm);
+  .header-pwa-btn,
+  .header-call-btn,
+  .header-wa-btn {
+    padding: 5px 8px !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    border-radius: var(--radius-sm) !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.2px !important;
+    line-height: 1.2 !important;
   }
 
-  .brand-logo {
-    gap: 6px;
+  .owner-sync-icon-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.8rem !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
   }
 
-  .brand-logo .logo-icon {
-    font-size: 1.5rem;
+  .header-search-wrapper {
+    order: 3 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-top: 2px !important;
   }
 
-  .brand-logo .main-name {
-    font-size: 0.95rem;
+  .header-search-input {
+    padding: 8px 12px 8px 36px !important;
+    font-size: 0.85rem !important;
   }
 
-  .brand-logo .tagline {
-    font-size: 0.55rem;
+  .header-search-icon {
+    left: 12px !important;
+    font-size: 0.9rem !important;
   }
 
   .table-badge-btn {
@@ -2507,12 +2561,78 @@
     padding: 5px 9px;
     font-size: 0.78rem;
   }
+}
+
+@media (max-width: 480px) {
+  .header-top-bar {
+    gap: 4px 6px !important;
+    padding: 6px 0 !important;
+  }
+
+  .brand-logo .main-name {
+    font-size: 0.88rem !important;
+  }
+
+  .brand-logo .tagline {
+    display: none !important;
+  }
+
+  .header-actions {
+    gap: 3px !important;
+  }
+
+  .header-contact-actions {
+    gap: 3px !important;
+  }
+
+  .header-pwa-btn,
+  .header-call-btn,
+  .header-wa-btn {
+    padding: 4px 6px !important;
+    font-size: 0.7rem !important;
+  }
 
   .owner-sync-icon-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
   }
+}
+
+@media (max-width: 360px) {
+  .header-top-bar {
+    gap: 4px !important;
+  }
+
+  .brand-logo .logo-icon {
+    font-size: 1.2rem !important;
+  }
+
+  .brand-logo .main-name {
+    font-size: 0.82rem !important;
+  }
+
+  .header-actions {
+    gap: 2px !important;
+  }
+
+  .header-contact-actions {
+    gap: 2px !important;
+  }
+
+  .header-pwa-btn,
+  .header-call-btn,
+  .header-wa-btn {
+    padding: 4px 4px !important;
+    font-size: 0.66rem !important;
+  }
+
+  .owner-sync-icon-btn {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.72rem !important;
+  }
+}
 
   .hero-slider-container {
     margin: 12px 0 20px 0;
