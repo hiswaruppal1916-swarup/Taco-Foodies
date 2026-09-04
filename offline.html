@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — TACO Foodies</title>
+  <meta name="theme-color" content="#121212">
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --fk-yellow: #ffb703;
+      --text-primary: #ffffff;
+      --text-secondary: #aaaaaa;
+      --radius-lg: 16px;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    .offline-card {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+    h1 {
+      font-size: 1.6rem;
+      color: var(--fk-yellow);
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+    p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .retry-btn {
+      background-color: var(--fk-yellow);
+      color: #000000;
+      font-weight: 800;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 28px;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+    .retry-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <span class="icon">🌮</span>
+    <h1>You are Currently Offline</h1>
+    <p>
+      TACO Foodies requires an active internet connection to retrieve live menu items, process custom orders, and sync live delivery status.
+    </p>
+    <button class="retry-btn" onclick="window.location.reload()">
+      🔄 Retry Connection
+    </button>
+  </div>
+</body>
+</html>

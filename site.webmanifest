@@ -1,19 +1,32 @@
 {
   "name": "TACO Foodies — Mexican & Chinese Restaurant",
   "short_name": "TACO Foodies",
+  "description": "Order Mexican Tacos, Indo-Chinese Sizzlers, Hakka Noodles & Dim Sum from TACO Foodies in Bhupati Nagar.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "taco-foodies-pwa",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#121212",
+  "background_color": "#121212",
+  "categories": ["food", "shopping", "lifestyle"],
   "icons": [
     {
       "src": "images/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "images/android-chrome-512x512.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png"
     }
-  ],
-  "theme_color": "#121212",
-  "background_color": "#121212",
-  "display": "standalone"
+  ]
 }

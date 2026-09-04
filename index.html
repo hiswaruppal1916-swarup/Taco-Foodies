@@ -15,6 +15,10 @@
   <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#121212">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TACO Foodies">
 
   <!-- Open Graph / Social Sharing Metadata -->
   <meta property="og:type" content="website">
@@ -105,6 +109,11 @@
 
         <!-- Top Header Action Controls (Display ONLY Call Now & WhatsApp) -->
         <div class="header-actions">
+          <!-- PWA Install Button -->
+          <button id="headerPwaInstallBtn" class="header-pwa-btn" style="display: none;" onclick="pwaInstallManager.triggerInstallPrompt()" title="Install TACO Foodies App">
+            📱 Install App
+          </button>
+
           <div class="header-contact-actions">
             <a href="tel:08400310013" class="header-call-btn" title="Call TACO Foodies">📞 Call Now</a>
             <a href="https://wa.me/918400310013" target="_blank" class="header-wa-btn" title="Chat on WhatsApp">💬 WhatsApp</a>
@@ -464,6 +473,11 @@
       <span class="icon">💬</span>
       <span>Chat</span>
     </a>
+
+    <button id="mobilePwaInstallBtn" class="floating-action-item" style="display: none;" onclick="pwaInstallManager.triggerInstallPrompt()">
+      <span class="icon">📱</span>
+      <span>Install</span>
+    </button>
   </div>
 
 
@@ -650,6 +664,48 @@
     </div>
   </div>
 
+  <!-- PWA Floating Toast Banner -->
+  <div id="pwaInstallBanner" class="pwa-install-banner">
+    <div class="pwa-banner-info">
+      <span class="pwa-banner-icon">🌮</span>
+      <div class="pwa-banner-text">
+        <h4>Install TACO Foodies App</h4>
+        <p>Fast menu access & instant order tracking from your home screen.</p>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="pwa-install-btn-primary" onclick="pwaInstallManager.triggerInstallPrompt()">Install</button>
+      <button class="pwa-dismiss-btn" onclick="pwaInstallManager.dismissInstallBanner()" title="Dismiss">✕</button>
+    </div>
+  </div>
+
+  <!-- iOS Safari PWA Instruction Modal -->
+  <div id="iosPwaModal" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 440px; text-align: center;">
+      <button class="close-modal-btn" onclick="pwaInstallManager.closeIOSInstallModal()">✕</button>
+      <span style="font-size: 3rem;">📱</span>
+      <h3 style="font-size: 1.3rem; color: var(--fk-yellow); margin-top: 8px;">Install TACO Foodies on iPhone/iPad</h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+        Follow these quick steps to add TACO Foodies directly to your iOS home screen:
+      </p>
+      <ul class="ios-pwa-step-list">
+        <li>
+          <span class="step-icon">1️⃣</span>
+          <span>Tap the <strong>Share button</strong> (⎋) at the bottom of Safari.</span>
+        </li>
+        <li>
+          <span class="step-icon">2️⃣</span>
+          <span>Scroll down and tap <strong>Add to Home Screen</strong> (➕).</span>
+        </li>
+        <li>
+          <span class="step-icon">3️⃣</span>
+          <span>Tap <strong>Add</strong> in the top-right corner.</span>
+        </li>
+      </ul>
+      <button class="primary-btn full-width" onclick="pwaInstallManager.closeIOSInstallModal()" style="padding: 12px; justify-content: center;">Got It!</button>
+    </div>
+  </div>
+
   <!-- JavaScript Modules -->
   <script src="js/menuData.js"></script>
   <script src="js/tableQR.js"></script>
@@ -661,5 +717,6 @@
   <script src="js/ownerDashboard.js"></script>
   <script src="js/UIController.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/pwaInstall.js"></script>
 </body>
 </html>
