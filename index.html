@@ -606,7 +606,10 @@
           <h2 style="font-size: 1.5rem; color: var(--fk-yellow); font-weight: 900;">👑 TACO Foodies - Owner Dashboard</h2>
           <span style="font-size: 0.8rem; color: var(--taco-teal);">Live Supabase Database & Realtime Status Center</span>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button id="ownerPushNotifyBtn" class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="pushNotificationManager.toggleOwnerNotifications()" title="Enable sound & screen alerts for new orders">
+            🔔 Enable Order Notifications
+          </button>
           <button id="openOwnerSyncModalBtn" class="secondary-btn" style="padding: 6px 12px; font-size: 0.8rem;" title="Owner Google Sheet Menu Sync Settings">
             ⚙️ Menu & Google Sheet Sync
           </button>
@@ -712,6 +715,7 @@
   <script src="js/tableQR.js"></script>
   <script src="js/googleSheetsSync.js"></script>
   <script src="js/supabaseClient.js"></script>
+  <script src="js/pushNotifications.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/checkout.js"></script>
   <script src="js/orderTracker.js"></script>

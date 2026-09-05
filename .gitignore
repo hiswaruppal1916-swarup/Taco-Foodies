@@ -1,0 +1,4 @@
+.agents/
+powershell.cmd
+run_git.ps1
+update_icons.ps1

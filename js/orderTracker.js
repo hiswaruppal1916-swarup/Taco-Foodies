@@ -202,11 +202,28 @@ class OrderTracker {
       localStorage.setItem(this.idListKey, JSON.stringify(idList));
     }
 
+    if (newOrder.trackingToken) {
+      try {
+        const tokenMap = JSON.parse(localStorage.getItem('taco_customer_order_tokens') || '{}');
+        tokenMap[orderNum] = newOrder.trackingToken;
+        localStorage.setItem('taco_customer_order_tokens', JSON.stringify(tokenMap));
+      } catch (e) {}
+    }
+
     if (typeof cartSystem !== 'undefined' && cartSystem.showToastNotification) {
       cartSystem.showToastNotification(`🎉 Order #${orderNum} placed successfully!`);
     }
 
     return newOrder;
+  }
+
+  getTrackingToken(orderNum) {
+    try {
+      const tokenMap = JSON.parse(localStorage.getItem('taco_customer_order_tokens') || '{}');
+      return tokenMap[orderNum] || null;
+    } catch (e) {
+      return null;
+    }
   }
 
   async getCustomerOrdersList() {
@@ -517,6 +534,14 @@ class OrderTracker {
             <span>Subtotal: ₹${order.foodTotal || 0} ${isDelivery ? '+ ₹' + (order.deliveryFee || 0) + ' Delivery' : ''}</span>
             <span class="card-grand-total">Total: ₹${order.grandTotal || 0}</span>
           </div>
+
+          ${isActive ? `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-glass); text-align: center;">
+              <button type="button" class="secondary-btn customer-push-prompt-${order.id || order.order_number}" style="width: 100%; justify-content: center; padding: 8px 12px; font-size: 0.8rem;" onclick="pushNotificationManager.subscribeCustomer('${order.id || order.order_number}', '${order.trackingToken || ''}')">
+                🔔 Get Push Notifications for Order #${order.id || order.order_number}
+              </button>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;

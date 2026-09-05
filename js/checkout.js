@@ -541,6 +541,10 @@ class CheckoutSystem {
           <div class="summary-line" style="font-size: 0.85rem; color: var(--text-secondary);"><span>Real-Time Sync:</span> <strong>Supabase WebSocket Sync</strong></div>
         </div>
 
+        <button type="button" class="secondary-btn customer-push-prompt-${orderId}" style="width: 100%; justify-content: center; padding: 10px; font-size: 0.88rem; margin-bottom: 12px;" onclick="pushNotificationManager.subscribeCustomer('${orderId}', (typeof orderTracker !== 'undefined' ? orderTracker.getTrackingToken('${orderId}') : null))">
+          🔔 Get Notification when Payment is Confirmed
+        </button>
+
         <button class="primary-btn full-width" style="justify-content: center; padding: 14px; font-size: 1rem; width: 100%;" onclick="checkoutSystem.closeCheckoutModal(); orderTracker.openMyOrdersModal();">
           📦 Track My Orders
         </button>
@@ -560,6 +564,9 @@ class CheckoutSystem {
         <p class="order-conf-message">
           Please wait while the restaurant reviews your order. You can track all active orders in real time.
         </p>
+        <button type="button" class="secondary-btn customer-push-prompt-${order.id || order.order_number}" style="width: 100%; justify-content: center; padding: 10px; font-size: 0.88rem; margin-bottom: 8px;" onclick="pushNotificationManager.subscribeCustomer('${order.id || order.order_number}', '${order.trackingToken || ''}')">
+          🔔 Enable Order Notifications on this device
+        </button>
         <button class="primary-btn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem; margin-top: 10px;" onclick="checkoutSystem.closeCheckoutModal(); orderTracker.openMyOrdersModal();">
           📦 Track My Orders
         </button>
@@ -596,6 +603,11 @@ class CheckoutSystem {
     
     if (order && typeof orderTracker !== 'undefined') {
       orderTracker.registerOrder(order);
+    }
+
+    // Trigger fail-safe Web Push notification to owner devices
+    if (order && typeof pushNotificationManager !== 'undefined') {
+      pushNotificationManager.sendNewOrderNotification(order);
     }
 
     // Clear cart if ordered from cart
@@ -660,6 +672,11 @@ class CheckoutSystem {
 
     if (typeof orderTracker !== 'undefined') {
       orderTracker.registerOrder(order);
+    }
+
+    // Trigger fail-safe Web Push notification to owner devices
+    if (order && typeof pushNotificationManager !== 'undefined') {
+      pushNotificationManager.sendNewOrderNotification(order);
     }
 
     if (!this.currentDish) {

@@ -9,7 +9,7 @@
  * - Offline fallback support via offline.html.
  */
 
-const CACHE_NAME = 'taco-foodies-v1';
+const CACHE_NAME = 'taco-foodies-v2.6.0';
 
 // Core static shell resources for offline resilience
 const STATIC_ASSETS = [
@@ -25,6 +25,7 @@ const STATIC_ASSETS = [
   '/js/tableQR.js',
   '/js/googleSheetsSync.js',
   '/js/supabaseClient.js',
+  '/js/pushNotifications.js',
   '/js/cart.js',
   '/js/checkout.js',
   '/js/orderTracker.js',
@@ -127,6 +128,82 @@ self.addEventListener('fetch', (event) => {
           statusText: 'Service Unavailable',
           headers: new Headers({ 'Content-Type': 'text/plain' })
         });
+      })
+  );
+});
+
+// ==============================================================================
+// 4. Web Push Notification Handlers
+// ==============================================================================
+
+// Push Event: Received message from server
+self.addEventListener('push', (event) => {
+  console.log('[ServiceWorker] Push event received');
+
+  let data = {
+    title: '🔔 TACO Foodies',
+    body: 'You have a new update from TACO Foodies!',
+    icon: '/images/android-chrome-192x192.png',
+    badge: '/images/android-chrome-192x192.png',
+    data: { url: '/' }
+  };
+
+  if (event.data) {
+    try {
+      const parsed = event.data.json();
+      data = { ...data, ...parsed };
+      if (parsed.data) {
+        data.data = { ...data.data, ...parsed.data };
+      }
+    } catch (e) {
+      try {
+        data.body = event.data.text();
+      } catch (err) {}
+    }
+  }
+
+  const notificationOptions = {
+    body: data.body,
+    icon: data.icon || '/images/android-chrome-192x192.png',
+    badge: data.badge || '/images/android-chrome-192x192.png',
+    data: data.data || { url: '/' },
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
+    tag: data.data?.orderNumber ? `order-${data.data.orderNumber}` : 'taco-notification',
+    renotify: true
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, notificationOptions)
+  );
+});
+
+// Notification Click Event: Focus or open target window
+self.addEventListener('notificationclick', (event) => {
+  console.log('[ServiceWorker] Notification clicked:', event.notification.tag);
+  event.notification.close();
+
+  const targetUrl = (event.notification.data && event.notification.data.url) 
+    ? event.notification.data.url 
+    : '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // If an open window exists, focus and navigate to target URL
+        for (let client of windowClients) {
+          if ('focus' in client) {
+            client.focus();
+            if ('navigate' in client) {
+              return client.navigate(targetUrl);
+            }
+            return;
+          }
+        }
+        // If no window is open, open a new window
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
       })
   );
 });

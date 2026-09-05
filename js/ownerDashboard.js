@@ -202,6 +202,10 @@ class OwnerDashboardManager {
 
     this.refreshDashboardData();
     modal.classList.add('active');
+
+    if (typeof pushNotificationManager !== 'undefined') {
+      pushNotificationManager.updateOwnerUI();
+    }
   }
 
   closeDashboardModal() {
@@ -602,6 +606,9 @@ class OwnerDashboardManager {
 
     const success = await supabaseService.updateOrderPaymentStatus(orderId, 'advance_paid', 'confirmed');
     if (success) {
+      if (typeof pushNotificationManager !== 'undefined') {
+        pushNotificationManager.sendStatusChangeNotification(orderId, 'advance_paid');
+      }
       const target = (this.cachedOrders || []).find(o => o.id === orderId || o.order_number === orderId || o.db_id === orderId);
       if (target) {
         target.payment_status = 'advance_paid';
@@ -672,6 +679,11 @@ class OwnerDashboardManager {
     if (!success) {
       alert(`Database update failed for Order #${orderId}. Status was not updated.`);
       return; // Do NOT update local state or UI if database update fails
+    }
+
+    // Trigger fail-safe Web Push notification to customer device(s)
+    if (typeof pushNotificationManager !== 'undefined') {
+      pushNotificationManager.sendStatusChangeNotification(orderId, newStatus);
     }
 
     // 4. Update local cached order object upon confirmed database update
